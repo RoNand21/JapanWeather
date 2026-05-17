@@ -436,22 +436,27 @@ function renderMobile(){
     const card=document.createElement("div");card.className=`day-card${rain?" rain":""}`;card.id=`mcard-${dk}`;
 
     // Header
-    let hdr=`<div class="day-card-header" onclick="toggleMobile('${dk}',${JSON.stringify(locs)})">
-      <span class="day-date">${label}${rain?' <span class="rain-warn">⚠</span>':""}</span>
-      <span class="m-chevron">▼</span></div>`;
+    const hdrDiv=document.createElement("div");
+    hdrDiv.className="day-card-header";
+    hdrDiv.innerHTML=`<span class="day-date">${label}${rain?' <span class="rain-warn">⚠</span>':""}</span><span class="m-chevron">▼</span>`;
+    const locsArr=[...locs];
+    hdrDiv.addEventListener("click",function(){toggleMobile(dk,locsArr);});
+    card.appendChild(hdrDiv);
 
     // Summary chips
-    let chips=`<div class="day-card-summary">`;
+    const chipsDiv=document.createElement("div");
+    chipsDiv.className="day-card-summary";
     locs.forEach(loc=>{
       const d=dailyData[loc]?.[dk],cfg=LOCATIONS[loc];
-      if(d){chips+=`<span class="city-chip ${cfg.chip}">${cfg.label} <span class="chip-detail">${fmtFOnly(d.hi)}/${fmtFOnly(d.lo)} ${wmoShort(d.code)}</span></span>`;}
+      if(d){const sp=document.createElement("span");sp.className=`city-chip ${cfg.chip}`;sp.innerHTML=`${cfg.label} <span class="chip-detail">${fmtFOnly(d.hi)}/${fmtFOnly(d.lo)} ${wmoShort(d.code)}</span>`;chipsDiv.appendChild(sp);}
     });
-    chips+=`</div>`;
+    card.appendChild(chipsDiv);
 
     // Detail (hidden until expanded)
-    let det=`<div class="day-card-detail"></div>`;
+    const detDiv=document.createElement("div");
+    detDiv.className="day-card-detail";
+    card.appendChild(detDiv);
 
-    card.innerHTML=hdr+chips+det;
     wrap.appendChild(card);
   });
 }
