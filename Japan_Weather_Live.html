@@ -6,173 +6,98 @@
 <title>Japan Trip Weather — May 2026</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #F4F6F8; color: #1A1A2E; min-height: 100vh; -webkit-text-size-adjust: 100%; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#F4F6F8;color:#1A1A2E;min-height:100vh;-webkit-text-size-adjust:100%}
+  header{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  header h1{font-size:16px;font-weight:700}
+  header p{font-size:10px;color:#8AB4CC;margin-top:2px}
+  .btns{display:flex;gap:8px}
+  .btn{padding:8px 14px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:#fff;-webkit-tap-highlight-color:transparent}
+  .btn-refresh{background:#2563eb}.btn-export{background:#217346}
+  .btn:disabled{opacity:.5;cursor:not-allowed}.btn:active{opacity:.8}
+  #debug{background:#1a1a2e;color:#9ae6b4;padding:10px 16px;font-family:ui-monospace,'SF Mono',Monaco,monospace;font-size:10px;max-height:100px;overflow-y:auto;white-space:pre-wrap;border-bottom:2px solid #2563eb}
+  #debug .err{color:#fc8181}.ok{color:#9ae6b4}.info{color:#90cdf4}
+  main{padding:16px 20px}
 
-  header { background: linear-gradient(135deg,#1a1a2e,#16213e); color: #fff; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-  header h1 { font-size: 16px; font-weight: 700; }
-  header p { font-size: 10px; color: #8AB4CC; margin-top: 2px; }
-  .btns { display: flex; gap: 8px; }
-  .btn { padding: 8px 14px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; color: #fff; -webkit-tap-highlight-color: transparent; }
-  .btn-refresh { background: #2563eb; }
-  .btn-export  { background: #217346; }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn:active { opacity: 0.8; }
+  /* DESKTOP TABLE */
+  .table-wrap{overflow-x:auto;border-radius:10px;box-shadow:0 2px 14px rgba(0,0,0,.08)}
+  table.main-tbl{width:100%;border-collapse:collapse;background:#fff;min-width:900px;font-size:12px}
+  .loc-header th{padding:10px 12px;font-size:12px;font-weight:700;color:#fff;text-align:center}
+  .th-date-corner{background:#2C3E50}.th-tokyo{background:#1F4E79}.th-fuji{background:#4B0082}.th-kyoto{background:#145A32}.th-osaka{background:#7B241C}
+  .sub-header th{padding:6px 8px;font-size:10px;font-weight:700;text-transform:uppercase;background:#D6E4F0;text-align:center;border-bottom:2px solid #DDE1E7}
+  .sub-header .col-date{background:#EAECEE;color:#4A5568}
+  .col-tokyo{color:#1F4E79}.col-fuji{color:#4B0082}.col-kyoto{color:#145A32}.col-osaka{color:#7B241C}
+  tbody tr.day-row{border-bottom:1px solid #DDE1E7;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent}
+  tbody tr.day-row:nth-child(odd) td{background:#F8F9FA}
+  tbody tr.day-row.rain td{background:#FEF9E7!important}
+  tbody tr.day-row:hover td{background:#E8F0FE!important}
+  tbody tr.day-row.expanded td{background:#E3EAFD!important;border-bottom:none}
+  td{padding:7px 10px;text-align:center;border-right:1px solid #DDE1E7}
+  td:last-child{border-right:none}
+  td.section{border-left:2px solid #AAA}
+  .date-cell{font-weight:700;font-size:11px;background:#EAECEE!important;text-align:left;padding-left:12px;white-space:nowrap}
+  .rain .date-cell{color:#B7950B}
+  .hi{color:#C0392B;font-weight:600}.lo{color:#2471A3;font-weight:600}
+  .fc{color:#444;text-align:left;font-size:11px}
+  .empty{color:#AAA;font-size:10px;font-style:italic}
+  .avg-badge{display:inline-block;background:#FCF3CF;color:#7D6608;font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;margin-left:4px}
+  .chevron{float:right;font-size:10px;color:#888;transition:transform .2s}.chevron.open{transform:rotate(180deg)}
+  tr.detail-row td{padding:0;background:#F0F4FF!important;border-bottom:2px solid #2563eb}
+  .detail-wrap{padding:16px 20px}
+  .detail-grid{display:flex;gap:20px;flex-wrap:wrap}
 
-  /* ── VIEW TOGGLE ── */
-  .view-toggle { display: none; }
-  @media (max-width: 768px) {
-    .view-toggle { display: flex; gap: 0; margin: 0 20px; margin-top: 12px; border-radius: 8px; overflow: hidden; border: 2px solid #2563eb; }
-    .view-btn { flex: 1; padding: 10px; border: none; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
-    .view-btn.active { background: #2563eb; color: #fff; }
-    .view-btn:not(.active) { background: #fff; color: #2563eb; }
+  /* MOBILE CARDS */
+  #mobile-view{display:none}
+  .day-card{background:#fff;border-radius:12px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.07);overflow:hidden;border:1px solid #E0E4EA}
+  .day-card-header{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;background:#fff;transition:background .15s}
+  .day-card-header:active{background:#F0F4FF}
+  .day-card.rain .day-card-header{background:#FEF9E7}
+  .day-card.expanded .day-card-header{background:#E3EAFD}
+  .day-date{font-weight:700;font-size:14px;color:#1A1A2E}
+  .day-date .rain-warn{color:#B7950B;font-size:12px}
+  .m-chevron{font-size:12px;color:#888;transition:transform .2s}.m-chevron.open{transform:rotate(180deg)}
+  .day-card-summary{padding:0 16px 14px;display:flex;flex-wrap:wrap;gap:8px}
+  .city-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;font-size:11px;font-weight:600;color:#fff}
+  .chip-tokyo{background:#1F4E79}.chip-fuji{background:#4B0082}.chip-kyoto{background:#145A32}.chip-osaka{background:#7B241C}
+  .chip-detail{font-weight:400;font-size:10px;opacity:.9}
+  .day-card-detail{display:none;border-top:1px solid #DDE1E7}
+  .day-card.expanded .day-card-detail{display:block}
+
+  /* CITY PANEL (shared) */
+  .city-panel{flex:1;min-width:220px;border-radius:8px;overflow:hidden;border:1px solid #DDE1E7;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+  .city-panel-header{padding:8px 12px;font-size:12px;font-weight:700;color:#fff;display:flex;justify-content:space-between;align-items:center}
+  .cp-tokyo{background:#1F4E79}.cp-fuji{background:#4B0082}.cp-kyoto{background:#145A32}.cp-osaka{background:#7B241C}
+  .city-meta{padding:10px 12px;border-bottom:1px solid #DDE1E7;font-size:11px;display:flex;gap:12px;flex-wrap:wrap}
+  .meta-item{display:flex;align-items:center;gap:4px}
+  .meta-label{color:#888;font-size:10px;text-transform:uppercase}
+  .meta-value{font-weight:600;color:#222}
+  .total-precip{color:#2471A3;font-weight:700}
+  .hourly-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .hourly-tbl{width:100%;border-collapse:collapse;font-size:11px}
+  .hourly-tbl thead th{position:sticky;top:0;background:#EEF2FF;padding:6px 8px;font-size:10px;text-transform:uppercase;color:#555;text-align:center;border-bottom:1px solid #DDE1E7;white-space:nowrap}
+  .hourly-tbl tbody td{padding:5px 8px;text-align:center;border-bottom:1px solid #F0F0F0;white-space:nowrap}
+  .hourly-tbl tbody tr:nth-child(even) td{background:#FAFBFF}
+  .hourly-tbl .h-time{font-weight:600;color:#333;text-align:left}
+  .hourly-tbl .h-temp{color:#C0392B;font-weight:600}
+  .hourly-tbl .h-precip{color:#2471A3}.hourly-tbl .h-precip.wet{color:#1a56db;font-weight:700}
+  .hourly-tbl .h-desc{text-align:left;color:#444}
+  .avg-note{font-size:10px;color:#B7950B;padding:8px 12px;background:#FEF9E7;text-align:center}
+  .legend{margin-top:14px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid #DDE1E7;font-size:11px;color:#666;display:flex;gap:14px;flex-wrap:wrap}
+  .click-hint{margin-top:10px;font-size:11px;color:#888;text-align:center}
+  .loading-spinner{text-align:center;padding:20px;color:#888;font-size:12px}
+
+  @media(max-width:768px){
+    header h1{font-size:15px}main{padding:12px}
+    #desktop-view{display:none!important}#mobile-view{display:block!important}
+    .detail-grid{flex-direction:column;gap:12px}.city-panel{min-width:100%}
+    .city-meta{flex-direction:column;gap:8px}.meta-item{justify-content:space-between}
+    .hourly-tbl{font-size:12px}.hourly-tbl thead th{padding:8px 6px;font-size:9px}
+    .hourly-tbl tbody td{padding:6px}.legend{flex-direction:column;gap:6px}
   }
-
-  #debug {
-    background: #1a1a2e; color: #9ae6b4; padding: 10px 16px;
-    font-family: ui-monospace, 'SF Mono', Monaco, monospace; font-size: 10px;
-    max-height: 100px; overflow-y: auto; white-space: pre-wrap;
-    border-bottom: 2px solid #2563eb;
-  }
-  #debug .err  { color: #fc8181; }
-  #debug .ok   { color: #9ae6b4; }
-  #debug .info { color: #90cdf4; }
-
-  main { padding: 16px 20px; }
-
-  /* ═══════════════════════════════════════
-     DESKTOP TABLE VIEW
-     ═══════════════════════════════════════ */
-  .table-wrap { overflow-x: auto; border-radius: 10px; box-shadow: 0 2px 14px rgba(0,0,0,0.08); }
-  table.main-tbl { width: 100%; border-collapse: collapse; background: #fff; min-width: 900px; font-size: 12px; }
-  .loc-header th { padding: 10px 12px; font-size: 12px; font-weight: 700; color: #fff; text-align: center; }
-  .th-date-corner { background: #2C3E50; }
-  .th-tokyo { background: #1F4E79; }
-  .th-fuji  { background: #4B0082; }
-  .th-kyoto { background: #145A32; }
-  .th-osaka { background: #7B241C; }
-  .sub-header th { padding: 6px 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; background: #D6E4F0; text-align: center; border-bottom: 2px solid #DDE1E7; }
-  .sub-header .col-date { background: #EAECEE; color: #4A5568; }
-  .col-tokyo { color: #1F4E79; } .col-fuji { color: #4B0082; } .col-kyoto { color: #145A32; } .col-osaka { color: #7B241C; }
-
-  tbody tr.day-row { border-bottom: 1px solid #DDE1E7; cursor: pointer; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
-  tbody tr.day-row:nth-child(odd) td { background: #F8F9FA; }
-  tbody tr.day-row.rain td { background: #FEF9E7 !important; }
-  tbody tr.day-row:hover td { background: #E8F0FE !important; }
-  tbody tr.day-row.expanded td { background: #E3EAFD !important; border-bottom: none; }
-  td { padding: 7px 10px; text-align: center; border-right: 1px solid #DDE1E7; }
-  td:last-child { border-right: none; }
-  td.section { border-left: 2px solid #AAA; }
-  .date-cell { font-weight: 700; font-size: 11px; background: #EAECEE !important; text-align: left; padding-left: 12px; white-space: nowrap; }
-  .rain .date-cell { color: #B7950B; }
-  .hi  { color: #C0392B; font-weight: 600; }
-  .lo  { color: #2471A3; font-weight: 600; }
-  .fc  { color: #444; text-align: left; font-size: 11px; }
-  .empty { color: #AAA; font-size: 10px; font-style: italic; }
-  .avg-badge { display: inline-block; background: #FCF3CF; color: #7D6608; font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 3px; margin-left: 4px; }
-  .chevron { float: right; font-size: 10px; color: #888; transition: transform 0.2s; }
-  .chevron.open { transform: rotate(180deg); }
-
-  /* ── DETAIL ROW (desktop) ── */
-  tr.detail-row td { padding: 0; background: #F0F4FF !important; border-bottom: 2px solid #2563eb; }
-  .detail-wrap { padding: 16px 20px; }
-  .detail-grid { display: flex; gap: 20px; flex-wrap: wrap; }
-
-  /* ═══════════════════════════════════════
-     MOBILE CARD VIEW
-     ═══════════════════════════════════════ */
-  #mobile-view { display: none; }
-
-  .day-card {
-    background: #fff; border-radius: 12px; margin-bottom: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.07); overflow: hidden;
-    border: 1px solid #E0E4EA; -webkit-tap-highlight-color: transparent;
-  }
-  .day-card-header {
-    padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;
-    cursor: pointer; background: #fff; transition: background 0.15s;
-  }
-  .day-card-header:active { background: #F0F4FF; }
-  .day-card.rain .day-card-header { background: #FEF9E7; }
-  .day-card.expanded .day-card-header { background: #E3EAFD; }
-  .day-date { font-weight: 700; font-size: 14px; color: #1A1A2E; }
-  .day-date .rain-warn { color: #B7950B; font-size: 12px; }
-  .m-chevron { font-size: 12px; color: #888; transition: transform 0.2s; }
-  .m-chevron.open { transform: rotate(180deg); }
-
-  .day-card-summary { padding: 0 16px 14px; display: flex; flex-wrap: wrap; gap: 8px; }
-  .city-chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; color: #fff;
-  }
-  .chip-tokyo { background: #1F4E79; } .chip-fuji { background: #4B0082; }
-  .chip-kyoto { background: #145A32; } .chip-osaka { background: #7B241C; }
-  .chip-detail { font-weight: 400; font-size: 10px; opacity: 0.9; }
-
-  .day-card-detail { display: none; border-top: 1px solid #DDE1E7; }
-  .day-card.expanded .day-card-detail { display: block; }
-
-  /* ── CITY PANEL (shared) ── */
-  .city-panel {
-    flex: 1; min-width: 220px; border-radius: 8px; overflow: hidden;
-    border: 1px solid #DDE1E7; background: #fff;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
-  }
-  .city-panel-header {
-    padding: 8px 12px; font-size: 12px; font-weight: 700; color: #fff;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .cp-tokyo { background: #1F4E79; } .cp-fuji { background: #4B0082; }
-  .cp-kyoto { background: #145A32; } .cp-osaka { background: #7B241C; }
-
-  .city-meta { padding: 10px 12px; border-bottom: 1px solid #DDE1E7; font-size: 11px; display: flex; gap: 12px; flex-wrap: wrap; }
-  .meta-item { display: flex; align-items: center; gap: 4px; }
-  .meta-label { color: #888; font-size: 10px; text-transform: uppercase; }
-  .meta-value { font-weight: 600; color: #222; }
-  .total-precip { color: #2471A3; font-weight: 700; }
-
-  .hourly-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .hourly-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
-  .hourly-tbl thead th { position: sticky; top: 0; background: #EEF2FF; padding: 6px 8px; font-size: 10px; text-transform: uppercase; color: #555; text-align: center; border-bottom: 1px solid #DDE1E7; white-space: nowrap; }
-  .hourly-tbl tbody td { padding: 5px 8px; text-align: center; border-bottom: 1px solid #F0F0F0; white-space: nowrap; }
-  .hourly-tbl tbody tr:nth-child(even) td { background: #FAFBFF; }
-  .hourly-tbl .h-time { font-weight: 600; color: #333; text-align: left; }
-  .hourly-tbl .h-temp { color: #C0392B; font-weight: 600; }
-  .hourly-tbl .h-precip { color: #2471A3; }
-  .hourly-tbl .h-precip.wet { color: #1a56db; font-weight: 700; }
-  .hourly-tbl .h-desc { text-align: left; color: #444; }
-  .avg-note { font-size: 10px; color: #B7950B; padding: 8px 12px; background: #FEF9E7; text-align: center; }
-
-  .legend { margin-top: 14px; padding: 10px 14px; background: #fff; border-radius: 8px; border: 1px solid #DDE1E7; font-size: 11px; color: #666; display: flex; gap: 14px; flex-wrap: wrap; }
-  .click-hint { margin-top: 10px; font-size: 11px; color: #888; text-align: center; }
-  .loading-spinner { text-align: center; padding: 20px; color: #888; font-size: 12px; }
-
-  /* ═══════════════════════════════════════
-     MOBILE PANELS STACKED
-     ═══════════════════════════════════════ */
-  @media (max-width: 768px) {
-    header h1 { font-size: 15px; }
-    main { padding: 12px; }
-    #desktop-view { display: none !important; }
-    #mobile-view  { display: block !important; }
-    .detail-grid  { flex-direction: column; gap: 12px; }
-    .city-panel   { min-width: 100%; }
-    .city-meta    { flex-direction: column; gap: 8px; }
-    .meta-item    { justify-content: space-between; }
-    .hourly-tbl   { font-size: 12px; }
-    .hourly-tbl thead th { padding: 8px 6px; font-size: 9px; }
-    .hourly-tbl tbody td { padding: 6px; }
-    .legend { flex-direction: column; gap: 6px; }
-  }
-
-  @media (min-width: 769px) {
-    #mobile-view { display: none !important; }
-    #desktop-view { display: block !important; }
-  }
+  @media(min-width:769px){#mobile-view{display:none!important}#desktop-view{display:block!important}}
 </style>
 </head>
 <body>
-
 <header>
   <div>
     <h1>🗾 Japan Trip Weather — May 2026</h1>
@@ -180,14 +105,11 @@
   </div>
   <div class="btns">
     <button class="btn btn-refresh" id="refreshBtn" onclick="run()">↻ Refresh</button>
-    <button class="btn btn-export"  id="exportBtn"  onclick="exportExcel()" disabled>⬇ Export</button>
+    <button class="btn btn-export" id="exportBtn" onclick="exportExcel()" disabled>⬇ Export</button>
   </div>
 </header>
-
 <div id="debug">Initializing…</div>
-
 <main>
-  <!-- ════ DESKTOP VIEW ════ -->
   <div id="desktop-view">
     <div class="table-wrap">
       <table class="main-tbl">
@@ -211,11 +133,8 @@
       </table>
     </div>
   </div>
-
-  <!-- ════ MOBILE VIEW ════ -->
   <div id="mobile-view"></div>
-
-  <p class="click-hint">👆 Tap any day to expand hourly forecast, sunrise/sunset & precipitation</p>
+  <p class="click-hint">👆 Tap any day for hourly forecast, sunrise/sunset & precipitation</p>
   <div class="legend">
     <strong>Legend:</strong>
     <span><span class="avg-badge">AVG</span> = historical average</span>
@@ -225,254 +144,396 @@
 </main>
 
 <script>
-// ── CONFIG ──
-const LOCATIONS = {
-  tokyo: { lat: 35.6762, lon: 139.6503, label: "🗼 Tokyo",    cls: "cp-tokyo", chip: "chip-tokyo" },
-  fuji:  { lat: 35.5131, lon: 138.7580, label: "🗻 Mt. Fuji", cls: "cp-fuji",  chip: "chip-fuji"  },
-  kyoto: { lat: 35.0116, lon: 135.7681, label: "⛩ Kyoto",    cls: "cp-kyoto", chip: "chip-kyoto" },
-  osaka: { lat: 34.6937, lon: 135.5023, label: "🏯 Osaka",    cls: "cp-osaka", chip: "chip-osaka" },
+// ═══ CONFIG ═══
+var LOCATIONS = {
+  tokyo: {lat:35.6762,lon:139.6503,label:"🗼 Tokyo",cls:"cp-tokyo",chip:"chip-tokyo"},
+  fuji:  {lat:35.5131,lon:138.758, label:"🗻 Mt. Fuji",cls:"cp-fuji",chip:"chip-fuji"},
+  kyoto: {lat:35.0116,lon:135.7681,label:"⛩ Kyoto",cls:"cp-kyoto",chip:"chip-kyoto"},
+  osaka: {lat:34.6937,lon:135.5023,label:"🏯 Osaka",cls:"cp-osaka",chip:"chip-osaka"}
 };
-const SCHEDULE = [
-  { dateKey: "2026-05-20", label: "May 20 (Wed)", locs: ["tokyo"] },
-  { dateKey: "2026-05-21", label: "May 21 (Thu)", locs: ["tokyo"] },
-  { dateKey: "2026-05-22", label: "May 22 (Fri)", locs: ["tokyo"] },
-  { dateKey: "2026-05-23", label: "May 23 (Sat)", locs: ["tokyo"] },
-  { dateKey: "2026-05-24", label: "May 24 (Sun)", locs: ["tokyo"] },
-  { dateKey: "2026-05-25", label: "May 25 (Mon)", locs: ["tokyo","fuji"] },
-  { dateKey: "2026-05-26", label: "May 26 (Tue)", locs: ["tokyo","kyoto"] },
-  { dateKey: "2026-05-27", label: "May 27 (Wed)", locs: ["kyoto"] },
-  { dateKey: "2026-05-28", label: "May 28 (Thu)", locs: ["kyoto","osaka"] },
-  { dateKey: "2026-05-29", label: "May 29 (Fri)", locs: ["tokyo","kyoto"] },
-  { dateKey: "2026-05-30", label: "May 30 (Sat)", locs: ["tokyo"] },
+var SCHEDULE = [
+  {dk:"2026-05-20",label:"May 20 (Wed)",locs:["tokyo"]},
+  {dk:"2026-05-21",label:"May 21 (Thu)",locs:["tokyo"]},
+  {dk:"2026-05-22",label:"May 22 (Fri)",locs:["tokyo"]},
+  {dk:"2026-05-23",label:"May 23 (Sat)",locs:["tokyo"]},
+  {dk:"2026-05-24",label:"May 24 (Sun)",locs:["tokyo"]},
+  {dk:"2026-05-25",label:"May 25 (Mon)",locs:["tokyo","fuji"]},
+  {dk:"2026-05-26",label:"May 26 (Tue)",locs:["tokyo","kyoto"]},
+  {dk:"2026-05-27",label:"May 27 (Wed)",locs:["kyoto"]},
+  {dk:"2026-05-28",label:"May 28 (Thu)",locs:["kyoto","osaka"]},
+  {dk:"2026-05-29",label:"May 29 (Fri)",locs:["tokyo","kyoto"]},
+  {dk:"2026-05-30",label:"May 30 (Sat)",locs:["tokyo"]}
 ];
-const LOC_KEYS = ["tokyo","fuji","kyoto","osaka"];
+var LOC_KEYS = ["tokyo","fuji","kyoto","osaka"];
+var daily = {tokyo:{},fuji:{},kyoto:{},osaka:{}};
+var hourly = {tokyo:{},fuji:{},kyoto:{},osaka:{}};
+var sun = {tokyo:{},fuji:{},kyoto:{},osaka:{}};
+var openRow = null, openCard = null;
 
-let dailyData={tokyo:{},fuji:{},kyoto:{},osaka:{}};
-let hourlyData={tokyo:{},fuji:{},kyoto:{},osaka:{}};
-let sunData={tokyo:{},fuji:{},kyoto:{},osaka:{}};
-let openRow=null, openCard=null;
-
-// ── LOGGING ──
-function log(m,t=""){const el=document.getElementById("debug");el.innerHTML+=`<span${t?` class="${t}"`:""}>[${new Date().toLocaleTimeString()}] ${m}</span>\n`;el.scrollTop=el.scrollHeight;}
-
-// ── HELPERS ──
-function fmtTemp(c){if(c==null||isNaN(c))return null;return`${Math.round(c*9/5+32)}°F / ${Math.round(c)}°C`;}
-function fmtF(c){if(c==null||isNaN(c))return"—";return`${Math.round(c*9/5+32)}°F`;}
-function fmtFOnly(c){if(c==null||isNaN(c))return"—";return`${Math.round(c*9/5+32)}°`;}
-function mmIn(mm){return mm!=null&&!isNaN(mm)?mm/25.4:0;}
-function wmo(code){
-  if(code==null||isNaN(code))return"—";
-  if(code===0)return"☀️ Clear";if(code<=2)return"🌤 Partly cloudy";if(code===3)return"☁️ Overcast";
-  if(code<=49)return"🌫 Foggy";if(code<=59)return"🌦 Drizzle";if(code<=69)return"🌧 Rain";
-  if(code<=79)return"🌨 Snow";if(code<=84)return"🌦 Showers";if(code<=94)return"⛈ T-storm";return"🌩 Storm";
+// ═══ HELPERS ═══
+function log(m,t) {
+  var el = document.getElementById("debug");
+  el.innerHTML += '<span' + (t ? ' class="'+t+'"' : '') + '>[' + new Date().toLocaleTimeString() + '] ' + m + '</span>\n';
+  el.scrollTop = el.scrollHeight;
 }
-function wmoShort(code){
-  if(code==null||isNaN(code))return"—";
-  if(code===0)return"☀️";if(code<=2)return"🌤";if(code===3)return"☁️";
-  if(code<=49)return"🌫";if(code<=59)return"🌦";if(code<=69)return"🌧";
-  if(code<=79)return"🌨";if(code<=84)return"🌦";if(code<=94)return"⛈";return"🌩";
-}
-function isRainy(c){return c!=null&&c>=51;}
- new Date(iso).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",hour12:true,timeZone:"Asia/Tokyo"});}
+function fmtTemp(c) { return (c==null||isNaN(c)) ? null : Math.round(c*9/5+32)+'°F / '+Math.round(c)+'°C'; }
+function fmtF(c) { return (c==null||isNaN(c)) ? '—' : Math.round(c*9/5+32)+'°F'; }
+function fmtFS(c) { return (c==null||isNaN(c)) ? '—' : Math.round(c*9/5+32)+'°'; }
+function mmIn(mm) { return (mm!=null&&!isNaN(mm)) ? mm/25.4 : 0; }
+function isRainy(c) { return c!=null && c>=51; }
 
-// ── FETCH ──
-async function fetchDaily(key){
-  const{lat,lon}=LOCATIONS[key];
-  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weathercode,sunrise,sunset,precipitation_sum&forecast_days=16&timezone=Asia%2FTokyo`;
-  log(`Fetching daily ${key}…`,"info");
-  const r=await fetch(url);if(!r.ok)throw new Error(`HTTP ${r.status}`);
-  const j=await r.json();const res={},sun={};
-  j.daily.time.forEach((d,i)=>{
-    res[d]={hi:j.daily.temperature_2m_max[i],lo:j.daily.temperature_2m_min[i],code:j.daily.weathercode[i],precip_mm:j.daily.precipitation_sum[i],source:"live"};
-    sun[d]={sunrise:j.daily.sunrise[i],sunset:j.daily.sunset[i]};
+function fmt24(iso) {
+  if (!iso) return '—';
+  var m = iso.match(/T(\d{2}:\d{2})/);
+  return m ? m[1] : '—';
+}
+
+function wmo(code) {
+  if (code==null||isNaN(code)) return '—';
+  if (code===0) return '☀️ Clear';
+  if (code<=2) return '🌤 Partly cloudy';
+  if (code===3) return '☁️ Overcast';
+  if (code<=49) return '🌫 Foggy';
+  if (code<=59) return '🌦 Drizzle';
+  if (code<=69) return '🌧 Rain';
+  if (code<=79) return '🌨 Snow';
+  if (code<=84) return '🌦 Showers';
+  if (code<=94) return '⛈ T-storm';
+  return '🌩 Storm';
+}
+function wmoS(code) {
+  if (code==null||isNaN(code)) return '—';
+  if (code===0) return '☀️'; if (code<=2) return '🌤'; if (code===3) return '☁️';
+  if (code<=49) return '🌫'; if (code<=59) return '🌦'; if (code<=69) return '🌧';
+  if (code<=79) return '🌨'; if (code<=84) return '🌦'; if (code<=94) return '⛈';
+  return '🌩';
+}
+
+// ═══ FETCH ═══
+function fetchDaily(key) {
+  var c = LOCATIONS[key];
+  var url = 'https://api.open-meteo.com/v1/forecast?latitude='+c.lat+'&longitude='+c.lon
+    +'&daily=temperature_2m_max,temperature_2m_min,weathercode,sunrise,sunset,precipitation_sum&forecast_days=16&timezone=Asia%2FTokyo';
+  log('Fetching daily '+key+'…','info');
+  return fetch(url).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }).then(function(j){
+    if(!j.daily||!j.daily.time) throw new Error('Bad response');
+    for(var i=0;i<j.daily.time.length;i++){
+      var d=j.daily.time[i];
+      daily[key][d]={hi:j.daily.temperature_2m_max[i],lo:j.daily.temperature_2m_min[i],code:j.daily.weathercode[i],pmm:j.daily.precipitation_sum[i],src:'live'};
+      sun[key][d]={rise:j.daily.sunrise[i],set:j.daily.sunset[i]};
+    }
+    log('✓ '+key+' daily: '+j.daily.time.length+' days','ok');
   });
-  log(`✓ ${key} daily: ${j.daily.time.length} days`,"ok");
-  return{res,sun};
 }
 
-async function fetchHourly(key,dk){
-  const{lat,lon}=LOCATIONS[key];
-  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,precipitation&start_date=${dk}&end_date=${dk}&timezone=Asia%2FTokyo`;
-  log(`Fetching hourly ${key} ${dk}…`,"info");
-  const r=await fetch(url);if(!r.ok)throw new Error(`HTTP ${r.status}`);
-  const j=await r.json();
-  return j.hourly.time.map((t,i)=>({time:t,temp:j.hourly.temperature_2m[i],code:j.hourly.weathercode[i],pp:j.hourly.precipitation_probability[i],pmm:j.hourly.precipitation[i]}));
+function fetchHourly(key,dk) {
+  var c = LOCATIONS[key];
+  var url = 'https://api.open-meteo.com/v1/forecast?latitude='+c.lat+'&longitude='+c.lon
+    +'&hourly=temperature_2m,weathercode,precipitation_probability,precipitation&start_date='+dk+'&end_date='+dk+'&timezone=Asia%2FTokyo';
+  log('Fetching hourly '+key+' '+dk+'…','info');
+  return fetch(url).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }).then(function(j){
+    if(!j.hourly||!j.hourly.time) throw new Error('Bad response');
+    var hrs=[];
+    for(var i=0;i<j.hourly.time.length;i++){
+      hrs.push({time:j.hourly.time[i],temp:j.hourly.temperature_2m[i],code:j.hourly.weathercode[i],pp:j.hourly.precipitation_probability[i],pmm:j.hourly.precipitation[i]});
+    }
+    hourly[key][dk]=hrs;
+    log('✓ '+key+' hourly '+dk+': '+hrs.length+' hrs','ok');
+  });
 }
 
-async function fetchHistAvg(key,mmList){
-  const{lat,lon}=LOCATIONS[key];const years=[2021,2022,2023,2024,2025],bk={};
-  for(const y of years){try{
-    const r=await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${y}-${mmList[0]}&end_date=${y}-${mmList[mmList.length-1]}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum&timezone=Asia%2FTokyo`);
-    if(!r.ok)continue;const j=await r.json();if(!j.daily?.time)continue;
-    j.daily.time.forEach((d,i)=>{const mm=d.slice(5);if(!bk[mm])bk[mm]={h:[],l:[],c:[],p:[]};
-      if(j.daily.temperature_2m_max[i]!=null)bk[mm].h.push(j.daily.temperature_2m_max[i]);
-      if(j.daily.temperature_2m_min[i]!=null)bk[mm].l.push(j.daily.temperature_2m_min[i]);
-      if(j.daily.weathercode[i]!=null)bk[mm].c.push(j.daily.weathercode[i]);
-      if(j.daily.precipitation_sum[i]!=null)bk[mm].p.push(j.daily.precipitation_sum[i]);
-    });
-  }catch{}}
-  const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
-  const mode=a=>{const c={};a.forEach(v=>c[v]=(c[v]||0)+1);return+Object.keys(c).sort((a,b)=>c[b]-c[a])[0];};
-  const res={};
-  Object.entries(bk).forEach(([mm,b])=>{if(!b.h.length)return;res[`2026-${mm}`]={hi:avg(b.h),lo:avg(b.l),code:mode(b.c),precip_mm:avg(b.p),source:"avg"};});
-  return res;
-}
+function fetchHistAvg(key,mmList) {
+  var c = LOCATIONS[key];
+  var years=[2021,2022,2023,2024,2025];
+  var bk={};
 
-// ── MAIN ──
-async function run(){
-  document.getElementById("debug").innerHTML="";
-  document.getElementById("refreshBtn").disabled=true;
-  document.getElementById("exportBtn").disabled=true;
-  dailyData={tokyo:{},fuji:{},kyoto:{},osaka:{}};
-  hourlyData={tokyo:{},fuji:{},kyoto:{},osaka:{}};
-  sunData={tokyo:{},fuji:{},kyoto:{},osaka:{}};
-  openRow=null;openCard=null;
-
-  for(const k of LOC_KEYS){try{const{res,sun}=await fetchDaily(k);dailyData[k]=res;sunData[k]=sun;}catch(e){log(`✗ ${k}: ${e.message}`,"err");}}
-
-  const miss=new Set();
-  SCHEDULE.forEach(({dateKey:dk,locs:l})=>l.forEach(loc=>{if(!dailyData[loc]?.[dk])miss.add(dk.slice(5));}));
-  if(miss.size){const arr=[...miss].sort();
-    for(const k of LOC_KEYS){try{const r=await fetchHistAvg(k,arr);Object.entries(r).forEach(([dk,v])=>{if(!dailyData[k][dk])dailyData[k][dk]=v;});log(`✓ ${k} hist avg`,"ok");}catch(e){log(`✗ ${k} archive: ${e.message}`,"err");}}
+  function doYear(idx) {
+    if(idx>=years.length) return Promise.resolve();
+    var y=years[idx];
+    var url='https://archive-api.open-meteo.com/v1/archive?latitude='+c.lat+'&longitude='+c.lon
+      +'&start_date='+y+'-'+mmList[0]+'&end_date='+y+'-'+mmList[mmList.length-1]
+      +'&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum&timezone=Asia%2FTokyo';
+    return fetch(url).then(function(r){
+      if(!r.ok) return;
+      return r.json();
+    }).then(function(j){
+      if(!j||!j.daily||!j.daily.time) return;
+      for(var i=0;i<j.daily.time.length;i++){
+        var mm=j.daily.time[i].slice(5);
+        if(!bk[mm]) bk[mm]={h:[],l:[],c:[],p:[]};
+        if(j.daily.temperature_2m_max[i]!=null) bk[mm].h.push(j.daily.temperature_2m_max[i]);
+        if(j.daily.temperature_2m_min[i]!=null) bk[mm].l.push(j.daily.temperature_2m_min[i]);
+        if(j.daily.weathercode[i]!=null) bk[mm].c.push(j.daily.weathercode[i]);
+        if(j.daily.precipitation_sum[i]!=null) bk[mm].p.push(j.daily.precipitation_sum[i]);
+      }
+    }).catch(function(){}).then(function(){ return doYear(idx+1); });
   }
 
-  renderDesktop();
-  renderMobile();
-  document.getElementById("refreshBtn").disabled=false;
-  document.getElementById("exportBtn").disabled=false;
+  return doYear(0).then(function(){
+    var keys=Object.keys(bk);
+    for(var k=0;k<keys.length;k++){
+      var mm=keys[k], b=bk[mm];
+      if(!b.h.length) continue;
+      var avg=function(a){var s=0;for(var i=0;i<a.length;i++)s+=a[i];return s/a.length;};
+      var mode=function(a){var cnt={},best=a[0],mx=0;for(var i=0;i<a.length;i++){cnt[a[i]]=(cnt[a[i]]||0)+1;if(cnt[a[i]]>mx){mx=cnt[a[i]];best=a[i];}}return best;};
+      var dk='2026-'+mm;
+      if(!daily[key][dk]){
+        daily[key][dk]={hi:avg(b.h),lo:avg(b.l),code:mode(b.c),pmm:avg(b.p),src:'avg'};
+      }
+    }
+    log('✓ '+key+' hist avg done','ok');
+  });
 }
 
-// ── CITY PANEL HTML (shared) ──
-function panelHTML(loc,dk,hrs){
-  const cfg=LOCATIONS[loc],sun=sunData[loc]?.[dk],day=dailyData[loc]?.[dk];
-  const totalIn=day?.precip_mm!=null?mmIn(day.precip_mm).toFixed(2):"—";
-  const isAvg=day?.source==="avg";
-  let h=`<div class="city-panel"><div class="city-panel-header ${cfg.cls}"><span>${cfg.label}</span><span style="font-size:10px;font-weight:400">${dk}</span></div>
-    <div class="city-meta">
-      <div class="meta-item"><span class="meta-label">🌅 Sunrise</span><span class="meta-value">${sun?t12(sun.sunrise):"—"}</span></div>
-      <div class="meta-item"><span class="meta-label">🌇 Sunset</span><span class="meta-value">${sun?t12(sun.sunset):"—"}</span></div>
-      <div class="meta-item"><span class="meta-label">🌧 Total Precip</span><span class="meta-value total-precip">${totalIn} in</span></div>
-      <div class="meta-item"><span class="meta-label">🌡 Hi / Lo</span><span class="meta-value">${day?(fmtTemp(day.hi)+" / "+fmtTemp(day.lo)):"—"}</span></div>
-    </div>`;
-  if(isAvg||!hrs){
-    h+=`<div style="padding:12px;font-size:11px;color:#888;text-align:center">Hourly data available within 16-day forecast window only.</div>`;
-  }else{
-    h+=`<div class="hourly-scroll"><table class="hourly-tbl"><thead><tr><th>Hour</th><th>Temp</th><th>Precip %</th><th>Precip (in)</th><th>Conditions</th></tr></thead><tbody>`;
-    hrs.forEach(r=>{const pp=r.pp??0,pin=mmIn(r.pmm??0).toFixed(3),wet=pp>20||(r.pmm??0)>0.1;
-      h+=`<tr><td class="h-time">${hLabel(r.time)}</td><td class="h-temp">${fmtF(r.temp)}</td><td class="h-precip${wet?" wet":""}">${pp}%</td><td class="h-precip${wet?" wet":""}">${wet?pin:"—"}</td><td class="h-desc">${wmo(r.code)}</td></tr>`;
-    });
-    h+=`</tbody></table></div>`;
+// ═══ PANEL HTML (shared desktop+mobile) ═══
+function panelHTML(loc,dk,hrs) {
+  var cfg=LOCATIONS[loc], s=sun[loc][dk], d=daily[loc][dk];
+  var totalIn = (d&&d.pmm!=null) ? mmIn(d.pmm).toFixed(2) : '—';
+  var isAvg = d && d.src==='avg';
+
+  var h = '<div class="city-panel">'
+    +'<div class="city-panel-header '+cfg.cls+'"><span>'+cfg.label+'</span><span style="font-size:10px;font-weight:400">'+dk+'</span></div>'
+    +'<div class="city-meta">'
+    +'<div class="meta-item"><span class="meta-label">🌅 Sunrise</span><span class="meta-value">'+(s?fmt24(s.rise):'—')+'</span></div>'
+    +'<div class="meta-item"><span class="meta-label">🌇 Sunset</span><span class="meta-value">'+(s?fmt24(s.set):'—')+'</span></div>'
+    +'<div class="meta-item"><span class="meta-label">🌧 Total Precip</span><span class="meta-value total-precip">'+totalIn+' in</span></div>'
+    +'<div class="meta-item"><span class="meta-label">🌡 Hi / Lo</span><span class="meta-value">'+(d?fmtTemp(d.hi)+' / '+fmtTemp(d.lo):'—')+'</span></div>'
+    +'</div>';
+
+  if(isAvg||!hrs||!hrs.length){
+    h+='<div style="padding:12px;font-size:11px;color:#888;text-align:center">Hourly data available within 16-day forecast window only.</div>';
+  } else {
+    h+='<div class="hourly-scroll"><table class="hourly-tbl"><thead><tr>'
+      +'<th>Hour</th><th>Temp</th><th>Precip %</th><th>Precip (in)</th><th>Conditions</th>'
+      +'</tr></thead><tbody>';
+    for(var i=0;i<hrs.length;i++){
+      var r=hrs[i], pp=r.pp||0, pin=mmIn(r.pmm||0).toFixed(3), wet=pp>20||(r.pmm||0)>0.1;
+      h+='<tr><td class="h-time">'+fmt24(r.time)+'</td>'
+        +'<td class="h-temp">'+fmtF(r.temp)+'</td>'
+        +'<td class="h-precip'+(wet?' wet':'')+'">'+pp+'%</td>'
+        +'<td class="h-precip'+(wet?' wet':'')+'">'+( wet?pin:'—')+'</td>'
+        +'<td class="h-desc">'+wmo(r.code)+'</td></tr>';
+    }
+    h+='</tbody></table></div>';
   }
-  h+=`</div>`;return h;
+  h+='</div>';
+  return h;
 }
 
 // ═══ DESKTOP ═══
-async function toggleDesktop(dk,locs){
-  const did=`detail-${dk}`,ex=document.getElementById(did),dr=document.getElementById(`row-${dk}`);
-  if(ex){ex.remove();dr.classList.remove("expanded");dr.querySelector(".chevron").classList.remove("open");openRow=null;return;}
-  if(openRow){const p=document.getElementById(`detail-${openRow}`);if(p)p.remove();const pr=document.getElementById(`row-${openRow}`);if(pr){pr.classList.remove("expanded");pr.querySelector(".chevron").classList.remove("open");}}
-  openRow=dk;dr.classList.add("expanded");dr.querySelector(".chevron").classList.add("open");
+function toggleDesktop(dk,locs) {
+  var did='detail-'+dk, ex=document.getElementById(did), dr=document.getElementById('row-'+dk);
+  if(ex){ex.remove();dr.classList.remove('expanded');dr.querySelector('.chevron').classList.remove('open');openRow=null;return;}
+  if(openRow){var p=document.getElementById('detail-'+openRow);if(p)p.remove();var pr=document.getElementById('row-'+openRow);if(pr){pr.classList.remove('expanded');pr.querySelector('.chevron').classList.remove('open');}}
+  openRow=dk; dr.classList.add('expanded'); dr.querySelector('.chevron').classList.add('open');
 
-  const tr=document.createElement("tr");tr.id=did;tr.className="detail-row";
-  const td=document.createElement("td");td.colSpan=13;td.innerHTML=`<div class="loading-spinner">⏳ Loading hourly…</div>`;tr.appendChild(td);dr.insertAdjacentElement("afterend",tr);
+  var tr=document.createElement('tr');tr.id=did;tr.className='detail-row';
+  var td=document.createElement('td');td.colSpan=13;td.innerHTML='<div class="loading-spinner">⏳ Loading hourly…</div>';
+  tr.appendChild(td); dr.insertAdjacentElement('afterend',tr);
 
-  const panels={};
-  await Promise.all(locs.map(async loc=>{try{if(!hourlyData[loc][dk])hourlyData[loc][dk]=await fetchHourly(loc,dk);panels[loc]=hourlyData[loc][dk];}catch(e){log(`✗ hourly ${loc} ${dk}: ${e.message}`,"err");panels[loc]=null;}}));
+  var fetches=[];
+  for(var i=0;i<locs.length;i++){
+    (function(loc){
+      if(!hourly[loc][dk]){
+        fetches.push(fetchHourly(loc,dk).catch(function(e){log('✗ hourly '+loc+' '+dk+': '+e.message,'err');}));
+      } else {
+        fetches.push(Promise.resolve());
+      }
+    })(locs[i]);
+  }
 
-  const isAvg=locs.some(l=>dailyData[l]?.[dk]?.source==="avg");
-  let html=`<div class="detail-wrap">${isAvg?'<div class="avg-note">⚠ Beyond 16-day forecast — daily figures are 5-year historical averages.</div>':""}<div class="detail-grid">`;
-  locs.forEach(loc=>{html+=panelHTML(loc,dk,panels[loc]);});
-  html+=`</div></div>`;td.innerHTML=html;
+  Promise.all(fetches).then(function(){
+    var isAvg=false;
+    for(var i=0;i<locs.length;i++){if(daily[locs[i]][dk]&&daily[locs[i]][dk].src==='avg')isAvg=true;}
+    var html='<div class="detail-wrap">'+(isAvg?'<div class="avg-note">⚠ Beyond 16-day forecast — daily figures are 5-year historical averages.</div>':'')+'<div class="detail-grid">';
+    for(var i=0;i<locs.length;i++) html+=panelHTML(locs[i],dk,hourly[locs[i]][dk]);
+    html+='</div></div>';
+    td.innerHTML=html;
+  });
 }
 
-function renderDesktop(){
-  const tb=document.getElementById("tbody");tb.innerHTML="";
-  SCHEDULE.forEach(({dateKey:dk,label,locs})=>{
-    const rain=locs.some(l=>isRainy(dailyData[l]?.[dk]?.code));
-    const tr=document.createElement("tr");tr.id=`row-${dk}`;tr.className=`day-row${rain?" rain":""}`;
-    tr.onclick=()=>toggleDesktop(dk,locs);
-    const td=document.createElement("td");td.className="date-cell";td.innerHTML=`${label}${rain?" ⚠":""} <span class="chevron">▼</span>`;tr.appendChild(td);
-    LOC_KEYS.forEach((k,i)=>{
-      const active=locs.includes(k),d=active?dailyData[k]?.[dk]:null;
-      const tH=document.createElement("td"),tL=document.createElement("td"),tF=document.createElement("td");
-      if(i===0)tH.classList.add("section");
-      if(d&&fmtTemp(d.hi)){tH.className=`hi${i===0?" section":""}`;tL.className="lo";tF.className="fc";tH.innerHTML=fmtTemp(d.hi)+(d.source==="avg"?'<span class="avg-badge">AVG</span>':"");tL.textContent=fmtTemp(d.lo);tF.textContent=wmo(d.code);}
-      else if(active){[tH,tL,tF].forEach(t=>t.classList.add("empty"));tH.textContent="—";tL.textContent="—";tF.textContent="no data";}
-      else{[tH,tL,tF].forEach(t=>t.classList.add("empty"));tH.textContent="—";tL.textContent="—";tF.textContent="—";}
+function renderDesktop() {
+  var tb=document.getElementById('tbody'); tb.innerHTML='';
+  for(var s=0;s<SCHEDULE.length;s++){
+    var item=SCHEDULE[s], dk=item.dk, label=item.label, locs=item.locs;
+    var rain=false;
+    for(var i=0;i<locs.length;i++){var d=daily[locs[i]][dk];if(d&&isRainy(d.code))rain=true;}
+
+    var tr=document.createElement('tr');tr.id='row-'+dk;tr.className='day-row'+(rain?' rain':'');
+    (function(dk2,locs2){tr.addEventListener('click',function(){toggleDesktop(dk2,locs2);});})(dk,locs);
+
+    var tdD=document.createElement('td');tdD.className='date-cell';
+    tdD.innerHTML=label+(rain?' ⚠':'')+' <span class="chevron">▼</span>';
+    tr.appendChild(tdD);
+
+    for(var j=0;j<LOC_KEYS.length;j++){
+      var k=LOC_KEYS[j], active=locs.indexOf(k)>=0, d=active?daily[k][dk]:null;
+      var tH=document.createElement('td'),tL=document.createElement('td'),tF=document.createElement('td');
+      if(j===0)tH.classList.add('section');
+      if(d&&fmtTemp(d.hi)!=null){
+        tH.className='hi'+(j===0?' section':'');tL.className='lo';tF.className='fc';
+        tH.innerHTML=fmtTemp(d.hi)+(d.src==='avg'?'<span class="avg-badge">AVG</span>':'');
+        tL.textContent=fmtTemp(d.lo);tF.textContent=wmo(d.code);
+      } else if(active){
+        tH.className='empty';tL.className='empty';tF.className='empty';
+        tH.textContent='—';tL.textContent='—';tF.textContent='no data';
+      } else {
+        tH.className='empty';tL.className='empty';tF.className='empty';
+        tH.textContent='—';tL.textContent='—';tF.textContent='—';
+      }
       tr.appendChild(tH);tr.appendChild(tL);tr.appendChild(tF);
-    });
+    }
     tb.appendChild(tr);
-  });
+  }
 }
 
 // ═══ MOBILE ═══
-async function toggleMobile(dk,locs){
-  const card=document.getElementById(`mcard-${dk}`);
-  const detail=card.querySelector(".day-card-detail");
-  const chev=card.querySelector(".m-chevron");
+function toggleMobile(dk,locs) {
+  var card=document.getElementById('mc-'+dk);
+  var detail=card.querySelector('.day-card-detail');
+  var chev=card.querySelector('.m-chevron');
 
-  if(card.classList.contains("expanded")){card.classList.remove("expanded");chev.classList.remove("open");openCard=null;return;}
-  if(openCard){const pc=document.getElementById(`mcard-${openCard}`);if(pc){pc.classList.remove("expanded");pc.querySelector(".m-chevron").classList.remove("open");}}
-  openCard=dk;card.classList.add("expanded");chev.classList.add("open");
+  if(card.classList.contains('expanded')){
+    card.classList.remove('expanded');chev.classList.remove('open');openCard=null;return;
+  }
+  if(openCard){var pc=document.getElementById('mc-'+openCard);if(pc){pc.classList.remove('expanded');pc.querySelector('.m-chevron').classList.remove('open');}}
+  openCard=dk;card.classList.add('expanded');chev.classList.add('open');
+  detail.innerHTML='<div class="loading-spinner">⏳ Loading hourly…</div>';
 
-  detail.innerHTML=`<div class="loading-spinner">⏳ Loading hourly…</div>`;
+  var fetches=[];
+  for(var i=0;i<locs.length;i++){
+    (function(loc){
+      if(!hourly[loc][dk]){
+        fetches.push(fetchHourly(loc,dk).catch(function(e){log('✗ hourly '+loc+' '+dk+': '+e.message,'err');}));
+      } else {
+        fetches.push(Promise.resolve());
+      }
+    })(locs[i]);
+  }
 
-  const panels={};
-  await Promise.all(locs.map(async loc=>{try{if(!hourlyData[loc][dk])hourlyData[loc][dk]=await fetchHourly(loc,dk);panels[loc]=hourlyData[loc][dk];}catch(e){panels[loc]=null;}}));
-
-  const isAvg=locs.some(l=>dailyData[l]?.[dk]?.source==="avg");
-  let html=isAvg?'<div class="avg-note">⚠ Historical averages — hourly unavailable.</div>':"";
-  html+=`<div style="padding:12px;display:flex;flex-direction:column;gap:12px;">`;
-  locs.forEach(loc=>{html+=panelHTML(loc,dk,panels[loc]);});
-  html+=`</div>`;
-  detail.innerHTML=html;
-}
-
-function renderMobile(){
-  const wrap=document.getElementById("mobile-view");wrap.innerHTML="";
-  SCHEDULE.forEach(({dateKey:dk,label,locs})=>{
-    const rain=locs.some(l=>isRainy(dailyData[l]?.[dk]?.code));
-    const card=document.createElement("div");card.className=`day-card${rain?" rain":""}`;card.id=`mcard-${dk}`;
-
-    // Header
-    const hdrDiv=document.createElement("div");
-    hdrDiv.className="day-card-header";
-    hdrDiv.innerHTML=`<span class="day-date">${label}${rain?' <span class="rain-warn">⚠</span>':""}</span><span class="m-chevron">▼</span>`;
-    const locsArr=[...locs];
-    hdrDiv.addEventListener("click",function(){toggleMobile(dk,locsArr);});
-    card.appendChild(hdrDiv);
-
-    // Summary chips
-    const chipsDiv=document.createElement("div");
-    chipsDiv.className="day-card-summary";
-    locs.forEach(loc=>{
-      const d=dailyData[loc]?.[dk],cfg=LOCATIONS[loc];
-      if(d){const sp=document.createElement("span");sp.className=`city-chip ${cfg.chip}`;sp.innerHTML=`${cfg.label} <span class="chip-detail">${fmtFOnly(d.hi)}/${fmtFOnly(d.lo)} ${wmoShort(d.code)}</span>`;chipsDiv.appendChild(sp);}
-    });
-    card.appendChild(chipsDiv);
-
-    // Detail (hidden until expanded)
-    const detDiv=document.createElement("div");
-    detDiv.className="day-card-detail";
-    card.appendChild(detDiv);
-
-    wrap.appendChild(card);
+  Promise.all(fetches).then(function(){
+    var isAvg=false;
+    for(var i=0;i<locs.length;i++){if(daily[locs[i]][dk]&&daily[locs[i]][dk].src==='avg')isAvg=true;}
+    var html=(isAvg?'<div class="avg-note">⚠ Historical averages — hourly unavailable.</div>':'')
+      +'<div style="padding:12px;display:flex;flex-direction:column;gap:12px;">';
+    for(var i=0;i<locs.length;i++) html+=panelHTML(locs[i],dk,hourly[locs[i]][dk]);
+    html+='</div>';
+    detail.innerHTML=html;
   });
 }
 
-// ── EXCEL EXPORT ──
-function exportExcel(){
-  const wb=XLSX.utils.book_new(),rows=[];
-  rows.push(["","TOKYO","","","MT. FUJI","","","KYOTO","","","OSAKA","",""]);
-  rows.push(["Date","Hi","Lo","Forecast","Hi","Lo","Forecast","Hi","Lo","Forecast","Hi","Lo","Forecast"]);
-  SCHEDULE.forEach(({dateKey:dk,label,locs})=>{const row=[label];LOC_KEYS.forEach(k=>{const a=locs.includes(k),d=a?dailyData[k]?.[dk]:null;
-    if(d&&fmtTemp(d.hi)){row.push(fmtTemp(d.hi)+(d.source==="avg"?" (AVG)":""),fmtTemp(d.lo),wmo(d.code));}else if(a){row.push("—","—","no data");}else{row.push("—","—","—");}});rows.push(row);});
-  rows.push([],[`Open-Meteo, exported ${new Date().toLocaleString()}`]);
-  const ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=[{wch:16},{wch:16},{wch:14},{wch:24},{wch:16},{wch:14},{wch:24},{wch:16},{wch:14},{wch:24},{wch:16},{wch:14},{wch:24}];
-  XLSX.utils.book_append_sheet(wb,ws,"Forecast");XLSX.writeFile(wb,"Japan_Weather_Live_Export.xlsx");
+function renderMobile() {
+  var wrap=document.getElementById('mobile-view');wrap.innerHTML='';
+  for(var s=0;s<SCHEDULE.length;s++){
+    var item=SCHEDULE[s],dk=item.dk,label=item.label,locs=item.locs;
+    var rain=false;
+    for(var i=0;i<locs.length;i++){var d=daily[locs[i]][dk];if(d&&isRainy(d.code))rain=true;}
+
+    var card=document.createElement('div');card.className='day-card'+(rain?' rain':'');card.id='mc-'+dk;
+
+    var hdr=document.createElement('div');hdr.className='day-card-header';
+    hdr.innerHTML='<span class="day-date">'+label+(rain?' <span class="rain-warn">⚠</span>':'')+'</span><span class="m-chevron">▼</span>';
+    (function(dk2,locs2){hdr.addEventListener('click',function(){toggleMobile(dk2,locs2);});})(dk,locs);
+    card.appendChild(hdr);
+
+    var chips=document.createElement('div');chips.className='day-card-summary';
+    for(var i=0;i<locs.length;i++){
+      var d=daily[locs[i]][dk],cfg=LOCATIONS[locs[i]];
+      if(d){
+        var sp=document.createElement('span');sp.className='city-chip '+cfg.chip;
+        sp.innerHTML=cfg.label+' <span class="chip-detail">'+fmtFS(d.hi)+'/'+fmtFS(d.lo)+' '+wmoS(d.code)+'</span>';
+        chips.appendChild(sp);
+      }
+    }
+    card.appendChild(chips);
+
+    var det=document.createElement('div');det.className='day-card-detail';
+    card.appendChild(det);
+    wrap.appendChild(card);
+  }
 }
 
-window.addEventListener("load",run);
+// ═══ EXCEL ═══
+function exportExcel() {
+  var wb=XLSX.utils.book_new(),rows=[];
+  rows.push(['','TOKYO','','','MT. FUJI','','','KYOTO','','','OSAKA','','']);
+  rows.push(['Date','Hi','Lo','Forecast','Hi','Lo','Forecast','Hi','Lo','Forecast','Hi','Lo','Forecast']);
+  for(var s=0;s<SCHEDULE.length;s++){
+    var item=SCHEDULE[s],row=[item.label];
+    for(var j=0;j<LOC_KEYS.length;j++){
+      var k=LOC_KEYS[j],a=item.locs.indexOf(k)>=0,d=a?daily[k][item.dk]:null;
+      if(d&&fmtTemp(d.hi)){row.push(fmtTemp(d.hi)+(d.src==='avg'?' (AVG)':''),fmtTemp(d.lo),wmo(d.code));}
+      else if(a){row.push('—','—','no data');}
+      else{row.push('—','—','—');}
+    }
+    rows.push(row);
+  }
+  rows.push([],['Open-Meteo, exported '+new Date().toLocaleString()]);
+  var ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:16},{wch:16},{wch:14},{wch:24},{wch:16},{wch:14},{wch:24},{wch:16},{wch:14},{wch:24},{wch:16},{wch:14},{wch:24}];
+  XLSX.utils.book_append_sheet(wb,ws,'Forecast');
+  XLSX.writeFile(wb,'Japan_Weather_Live_Export.xlsx');
+}
+
+// ═══ MAIN ═══
+function run() {
+  document.getElementById('debug').innerHTML='';
+  document.getElementById('refreshBtn').disabled=true;
+  document.getElementById('exportBtn').disabled=true;
+  daily={tokyo:{},fuji:{},kyoto:{},osaka:{}};
+  hourly={tokyo:{},fuji:{},kyoto:{},osaka:{}};
+  sun={tokyo:{},fuji:{},kyoto:{},osaka:{}};
+  openRow=null;openCard=null;
+
+  // Fetch all 4 locations daily in parallel
+  var dailyFetches = [];
+  for (var i=0;i<LOC_KEYS.length;i++) {
+    (function(k){
+      dailyFetches.push(
+        fetchDaily(k).catch(function(e){ log('✗ '+k+': '+e.message,'err'); })
+      );
+    })(LOC_KEYS[i]);
+  }
+
+  Promise.all(dailyFetches).then(function(){
+    // Check which trip dates are missing
+    var miss={};
+    for(var s=0;s<SCHEDULE.length;s++){
+      var item=SCHEDULE[s];
+      for(var j=0;j<item.locs.length;j++){
+        if(!daily[item.locs[j]][item.dk]) miss[item.dk.slice(5)]=true;
+      }
+    }
+    var mmList=Object.keys(miss).sort();
+    if(mmList.length===0) return Promise.resolve();
+
+    log('Missing dates need hist avg: '+mmList.join(', '),'info');
+    var histFetches=[];
+    for(var i=0;i<LOC_KEYS.length;i++){
+      (function(k){
+        histFetches.push(fetchHistAvg(k,mmList).catch(function(e){log('✗ '+k+' archive: '+e.message,'err');}));
+      })(LOC_KEYS[i]);
+    }
+    return Promise.all(histFetches);
+  }).then(function(){
+    renderDesktop();
+    renderMobile();
+    document.getElementById('refreshBtn').disabled=false;
+    document.getElementById('exportBtn').disabled=false;
+    log('✓ Ready!','ok');
+  }).catch(function(e){
+    log('✗ Fatal: '+e.message,'err');
+    document.getElementById('refreshBtn').disabled=false;
+  });
+}
+
+window.addEventListener('load', run);
 </script>
 </body>
 </html>
