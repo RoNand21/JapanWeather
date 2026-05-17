@@ -176,7 +176,7 @@ function log(m,t) {
   el.innerHTML += '<span' + (t ? ' class="'+t+'"' : '') + '>[' + new Date().toLocaleTimeString() + '] ' + m + '</span>\n';
   el.scrollTop = el.scrollHeight;
 }
-function fmtTemp(c) { return (c==null||isNaN(c)) ? null : Math.round(c*9/5+32)+'°F / '+Math.round(c)+'°C'; }
+function fmtTemp(c) { return (c==null||isNaN(c)) ? null : Math.round(c*9/5+32)+'°F'; }
 function fmtF(c) { return (c==null||isNaN(c)) ? '—' : Math.round(c*9/5+32)+'°F'; }
 function fmtFS(c) { return (c==null||isNaN(c)) ? '—' : Math.round(c*9/5+32)+'°'; }
 function mmIn(mm) { return (mm!=null&&!isNaN(mm)) ? mm/25.4 : 0; }
