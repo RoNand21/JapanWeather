@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Japan Trip Weather — May 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #F4F6F8; color: #1A1A2E; min-height: 100vh; }
+  header { background: linear-gradient(135deg,#1a1a2e,#16213e); color: #fff; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  header h1 { font-size: 17px; font-weight: 700; }
+  header p { font-size: 11px; color: #8AB4CC; margin-top: 2px; }
+  .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { padding: 8px 14px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; color: #fff; }
+  .btn-refresh { background: #2563eb; }
+  .btn-export  { background: #217346; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  #debug {
+    background: #1a1a2e; color: #9ae6b4; padding: 12px 16px;
+    font-family: ui-monospace, 'SF Mono', Monaco, monospace; font-size: 11px;
+    max-height: 180px; overflow-y: auto; white-space: pre-wrap;
+    border-bottom: 2px solid #2563eb;
+  }
+  #debug .err { color: #fc8181; }
+  #debug .ok { color: #9ae6b4; }
+  #debug .info { color: #90cdf4; }
+
+  main { padding: 20px 24px; overflow-x: auto; }
+  .table-wrap { overflow-x: auto; border-radius: 10px; box-shadow: 0 2px 14px rgba(0,0,0,0.08); }
+  table { width: 100%; border-collapse: collapse; background: #fff; min-width: 900px; font-size: 12px; }
+
+  .loc-header th { padding: 10px 12px; font-size: 12px; font-weight: 700; color: #fff; text-align: center; }
+  .th-date-corner { background: #2C3E50; }
+  .th-tokyo { background: #1F4E79; }
+  .th-fuji  { background: #4B0082; }
+  .th-kyoto { background: #145A32; }
+  .th-osaka { background: #7B241C; }
+
+  .sub-header th { padding: 6px 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; background: #D6E4F0; text-align: center; border-bottom: 2px solid #DDE1E7; }
+  .sub-header .col-date { background: #EAECEE; color: #4A5568; }
+  .col-tokyo { color: #1F4E79; }
+  .col-fuji  { color: #4B0082; }
+  .col-kyoto { color: #145A32; }
+  .col-osaka { color: #7B241C; }
+
+  tbody tr { border-bottom: 1px solid #DDE1E7; }
+  tbody tr:nth-child(even) td { background: #F8F9FA; }
+  tbody tr.rain td { background: #FEF9E7 !important; }
+  td { padding: 7px 10px; text-align: center; border-right: 1px solid #DDE1E7; }
+  td:last-child { border-right: none; }
+  td.section { border-left: 2px solid #AAA; }
+  .date-cell { font-weight: 700; font-size: 11px; background: #EAECEE !important; text-align: left; padding-left: 12px; white-space: nowrap; }
+  .rain .date-cell { color: #B7950B; }
+  .hi { color: #C0392B; font-weight: 600; }
+  .lo { color: #2471A3; font-weight: 600; }
+  .fc { color: #444; text-align: left; font-size: 11px; }
+  .empty { color: #AAA; font-size: 10px; font-style: italic; }
+  .avg-badge { display: inline-block; background: #FCF3CF; color: #7D6608; font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 3px; margin-left: 4px; }
+  .legend { margin-top: 14px; padding: 10px 14px; background: #fff; border-radius: 8px; border: 1px solid #DDE1E7; font-size: 11px; color: #666; display: flex; gap: 18px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🗾 Japan Trip Weather — May 2026</h1>
+    <p>Live data via Open-Meteo</p>
+  </div>
+  <div class="btns">
+    <button class="btn btn-refresh" id="refreshBtn" onclick="run()">↻ Refresh</button>
+    <button class="btn btn-export" id="exportBtn" onclick="exportExcel()" disabled>⬇ Export Excel</button>
+  </div>
+</header>
+
+<div id="debug">Initializing...</div>
+
+<main>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr class="loc-header">
+          <th class="th-date-corner"></th>
+          <th colspan="3" class="th-tokyo">🗼 TOKYO</th>
+          <th colspan="3" class="th-fuji">🗻 MT. FUJI</th>
+          <th colspan="3" class="th-kyoto">⛩ KYOTO</th>
+          <th colspan="3" class="th-osaka">🏯 OSAKA</th>
+        </tr>
+        <tr class="sub-header">
+          <th class="col-date">Date</th>
+          <th class="col-tokyo">Hi</th><th class="col-tokyo">Lo</th><th class="col-tokyo">Forecast</th>
+          <th class="col-fuji">Hi</th><th class="col-fuji">Lo</th><th class="col-fuji">Forecast</th>
+          <th class="col-kyoto">Hi</th><th class="col-kyoto">Lo</th><th class="col-kyoto">Forecast</th>
+          <th class="col-osaka">Hi</th><th class="col-osaka">Lo</th><th class="col-osaka">Forecast</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <div class="legend">
+    <strong>Legend:</strong>
+    <span><span class="avg-badge">AVG</span> = historical average (date beyond live forecast)</span>
+    <span style="color:#B7950B">⚠ rain expected</span>
+    <span>— = no scheduled location</span>
+  </div>
+</main>
+
+<script>
+// ───── CONFIG ─────
+const LOCATIONS = {
+  tokyo: { lat: 35.6762, lon: 139.6503 },
+  fuji:  { lat: 35.5131, lon: 138.7580 },
+  kyoto: { lat: 35.0116, lon: 135.7681 },
+  osaka: { lat: 34.6937, lon: 135.5023 },
+};
+
+// Schedule: which dates and which locations are active
+const SCHEDULE = [
+  { dateKey: "2026-05-20", label: "May 20 (Wed)", locs: ["tokyo"] },
+  { dateKey: "2026-05-21", label: "May 21 (Thu)", locs: ["tokyo"] },
+  { dateKey: "2026-05-22", label: "May 22 (Fri)", locs: ["tokyo"] },
+  { dateKey: "2026-05-23", label: "May 23 (Sat)", locs: ["tokyo"] },
+  { dateKey: "2026-05-24", label: "May 24 (Sun)", locs: ["tokyo"] },
+  { dateKey: "2026-05-25", label: "May 25 (Mon)", locs: ["tokyo", "fuji"] },
+  { dateKey: "2026-05-26", label: "May 26 (Tue)", locs: ["tokyo", "kyoto"] },
+  { dateKey: "2026-05-27", label: "May 27 (Wed)", locs: ["kyoto"] },
+  { dateKey: "2026-05-28", label: "May 28 (Thu)", locs: ["kyoto", "osaka"] },
+  { dateKey: "2026-05-29", label: "May 29 (Fri)", locs: ["tokyo", "kyoto"] },
+  { dateKey: "2026-05-30", label: "May 30 (Sat)", locs: ["tokyo"] },
+];
+
+const LOC_KEYS = ["tokyo", "fuji", "kyoto", "osaka"];
+
+// In-memory data store
+let data = { tokyo: {}, fuji: {}, kyoto: {}, osaka: {} };
+
+// ───── LOGGING ─────
+function log(msg, type = "") {
+  const el = document.getElementById("debug");
+  const t = new Date().toLocaleTimeString();
+  const cls = type ? ` class="${type}"` : "";
+  el.innerHTML += `<span${cls}>[${t}] ${msg}</span>\n`;
+  el.scrollTop = el.scrollHeight;
+  console.log(`[${type}] ${msg}`);
+}
+
+// ───── HELPERS ─────
+function fmtTemp(c) {
+  if (c == null || isNaN(c)) return null;
+  return `${Math.round(c * 9/5 + 32)}°F / ${Math.round(c)}°C`;
+}
+function wmoText(code) {
+  if (code == null || isNaN(code)) return "—";
+  if (code === 0) return "☀️ Clear";
+  if (code <= 2) return "🌤 Partly cloudy";
+  if (code === 3) return "☁️ Overcast";
+  if (code <= 49) return "🌫 Foggy";
+  if (code <= 59) return "🌦 Drizzle";
+  if (code <= 69) return "🌧 Rain";
+  if (code <= 79) return "🌨 Snow";
+  if (code <= 84) return "🌦 Showers";
+  if (code <= 94) return "⛈ Thunderstorm";
+  return "🌩 Storm";
+}
+function isRainy(code) { return code != null && code >= 51; }
+
+// ───── DATA FETCHING ─────
+// Returns {date: {hi, lo, code, source}} for given location, in given year
+async function fetchLocationLive(key) {
+  const { lat, lon } = LOCATIONS[key];
+  // forecast_days=16 starts at today, gives daily forecast
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&forecast_days=16&timezone=Asia%2FTokyo`;
+
+  log(`Fetching live forecast for ${key}...`, "info");
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${key} forecast: HTTP ${res.status}`);
+  const json = await res.json();
+
+  if (!json.daily || !json.daily.time) {
+    throw new Error(`${key} forecast: malformed response`);
+  }
+
+  const result = {};
+  json.daily.time.forEach((d, i) => {
+    result[d] = {
+      hi: json.daily.temperature_2m_max[i],
+      lo: json.daily.temperature_2m_min[i],
+      code: json.daily.weathercode[i],
+      source: "live",
+    };
+  });
+  log(`✓ ${key}: got ${json.daily.time.length} days, ranging ${json.daily.time[0]} → ${json.daily.time[json.daily.time.length-1]}`, "ok");
+  return result;
+}
+
+// Pull historical average from the archive API for missing trip dates
+async function fetchHistoricalAvg(key, mmddList) {
+  const { lat, lon } = LOCATIONS[key];
+  const years = [2021, 2022, 2023, 2024, 2025];
+  const buckets = {}; // mmdd -> { hi: [], lo: [], codes: [] }
+
+  for (const year of years) {
+    const minMM = mmddList[0];
+    const maxMM = mmddList[mmddList.length - 1];
+    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${year}-${minMM}&end_date=${year}-${maxMM}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Asia%2FTokyo`;
+    log(`Fetching ${key} archive ${year}...`, "info");
+    try {
+      const res = await fetch(url);
+      if (!res.ok) { log(`  ${year} HTTP ${res.status}, skipping`, "err"); continue; }
+      const json = await res.json();
+      if (!json.daily || !json.daily.time) { log(`  ${year} no daily data`, "err"); continue; }
+      json.daily.time.forEach((d, i) => {
+        const mmdd = d.slice(5);
+        if (!buckets[mmdd]) buckets[mmdd] = { hi: [], lo: [], codes: [] };
+        if (json.daily.temperature_2m_max[i] != null) buckets[mmdd].hi.push(json.daily.temperature_2m_max[i]);
+        if (json.daily.temperature_2m_min[i] != null) buckets[mmdd].lo.push(json.daily.temperature_2m_min[i]);
+        if (json.daily.weathercode[i] != null) buckets[mmdd].codes.push(json.daily.weathercode[i]);
+      });
+    } catch (e) {
+      log(`  ${year} fetch failed: ${e.message}`, "err");
+    }
+  }
+
+  const result = {};
+  const avg = arr => arr.reduce((a,b)=>a+b,0) / arr.length;
+  const mode = arr => {
+    const counts = {};
+    arr.forEach(v => counts[v] = (counts[v] || 0) + 1);
+    return +Object.keys(counts).sort((a,b) => counts[b] - counts[a])[0];
+  };
+  Object.entries(buckets).forEach(([mmdd, b]) => {
+    if (b.hi.length === 0) return;
+    result[`2026-${mmdd}`] = {
+      hi: avg(b.hi),
+      lo: avg(b.lo),
+      code: mode(b.codes),
+      source: "avg",
+    };
+  });
+  return result;
+}
+
+// ───── MAIN ─────
+async function run() {
+  document.getElementById("debug").innerHTML = "";
+  document.getElementById("refreshBtn").disabled = true;
+  document.getElementById("exportBtn").disabled = true;
+  data = { tokyo: {}, fuji: {}, kyoto: {}, osaka: {} };
+
+  const today = new Date();
+  log(`Today is ${today.toDateString()}. Trip is May 20-30, 2026.`, "info");
+
+  // Step 1: Get live forecast for all locations
+  let liveOK = 0;
+  for (const key of LOC_KEYS) {
+    try {
+      const res = await fetchLocationLive(key);
+      data[key] = res;
+      liveOK++;
+    } catch (e) {
+      log(`✗ ${key}: ${e.message}`, "err");
+    }
+  }
+  log(`Live fetch complete: ${liveOK}/${LOC_KEYS.length} locations succeeded`, liveOK === LOC_KEYS.length ? "ok" : "err");
+
+  // Step 2: Find which trip dates are missing per location
+  const missingMmdd = new Set();
+  SCHEDULE.forEach(({ dateKey, locs }) => {
+    locs.forEach(loc => {
+      if (!data[loc] || !data[loc][dateKey]) {
+        missingMmdd.add(dateKey.slice(5));
+      }
+    });
+  });
+
+  if (missingMmdd.size > 0) {
+    log(`Missing dates needing historical average: ${[...missingMmdd].sort().join(", ")}`, "info");
+    const mmddArr = [...missingMmdd].sort();
+    for (const key of LOC_KEYS) {
+      try {
+        const res = await fetchHistoricalAvg(key, mmddArr);
+        Object.entries(res).forEach(([dk, val]) => {
+          if (!data[key][dk]) data[key][dk] = val;
+        });
+        log(`✓ ${key}: historical avg done`, "ok");
+      } catch (e) {
+        log(`✗ ${key} archive: ${e.message}`, "err");
+      }
+    }
+  } else {
+    log(`All trip dates covered by live forecast.`, "ok");
+  }
+
+  // Step 3: Report what we have for the trip
+  let cellCount = 0;
+  SCHEDULE.forEach(({ dateKey, locs }) => {
+    locs.forEach(loc => {
+      if (data[loc][dateKey]) cellCount++;
+    });
+  });
+  const expectedCells = SCHEDULE.reduce((sum, s) => sum + s.locs.length, 0);
+  log(`Final: ${cellCount}/${expectedCells} expected data points populated.`, cellCount === expectedCells ? "ok" : "err");
+
+  render();
+  document.getElementById("refreshBtn").disabled = false;
+  document.getElementById("exportBtn").disabled = false;
+}
+
+// ───── RENDER ─────
+function render() {
+  const tbody = document.getElementById("tbody");
+  tbody.innerHTML = "";
+  SCHEDULE.forEach(({ dateKey, label, locs }) => {
+    const tr = document.createElement("tr");
+    const hasRain = locs.some(loc => isRainy(data[loc]?.[dateKey]?.code));
+    if (hasRain) tr.classList.add("rain");
+
+    const td = document.createElement("td");
+    td.className = "date-cell";
+    td.innerHTML = label + (hasRain ? ' ⚠' : '');
+    tr.appendChild(td);
+
+    LOC_KEYS.forEach((key, idx) => {
+      const active = locs.includes(key);
+      const d = active ? data[key]?.[dateKey] : null;
+      const tdHi = document.createElement("td");
+      const tdLo = document.createElement("td");
+      const tdFc = document.createElement("td");
+      if (idx === 0) tdHi.classList.add("section");
+
+      if (d && fmtTemp(d.hi) != null) {
+        tdHi.className = `hi${idx === 0 ? ' section' : ''}`;
+        tdLo.className = "lo";
+        tdFc.className = "fc";
+        const isAvg = d.source === "avg";
+        tdHi.innerHTML = fmtTemp(d.hi) + (isAvg ? '<span class="avg-badge">AVG</span>' : '');
+        tdLo.textContent = fmtTemp(d.lo);
+        tdFc.textContent = wmoText(d.code);
+      } else if (active) {
+        [tdHi, tdLo, tdFc].forEach(t => t.classList.add("empty"));
+        tdHi.textContent = "—";
+        tdLo.textContent = "—";
+        tdFc.textContent = "no data";
+      } else {
+        [tdHi, tdLo, tdFc].forEach(t => t.classList.add("empty"));
+        tdHi.textContent = "—";
+        tdLo.textContent = "—";
+        tdFc.textContent = "—";
+      }
+      tr.appendChild(tdHi);
+      tr.appendChild(tdLo);
+      tr.appendChild(tdFc);
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+// ───── EXCEL EXPORT ─────
+function exportExcel() {
+  const wb = XLSX.utils.book_new();
+  const rows = [];
+  rows.push(["", "TOKYO", "", "", "MT. FUJI", "", "", "KYOTO", "", "", "OSAKA", "", ""]);
+  rows.push(["Date", "Hi", "Lo", "Forecast", "Hi", "Lo", "Forecast", "Hi", "Lo", "Forecast", "Hi", "Lo", "Forecast"]);
+  SCHEDULE.forEach(({ dateKey, label, locs }) => {
+    const row = [label];
+    LOC_KEYS.forEach(key => {
+      const active = locs.includes(key);
+      const d = active ? data[key]?.[dateKey] : null;
+      if (d && fmtTemp(d.hi)) {
+        const sfx = d.source === "avg" ? " (AVG)" : "";
+        row.push(fmtTemp(d.hi) + sfx, fmtTemp(d.lo), wmoText(d.code));
+      } else if (active) {
+        row.push("—", "—", "no data");
+      } else {
+        row.push("—", "—", "—");
+      }
+    });
+    rows.push(row);
+  });
+  rows.push([]);
+  rows.push([`Open-Meteo, exported ${new Date().toLocaleString()}`]);
+  rows.push(["(AVG) = 5-year historical average for dates beyond 16-day forecast window"]);
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws["!merges"] = [
+    { s:{r:0,c:1},  e:{r:0,c:3}  },
+    { s:{r:0,c:4},  e:{r:0,c:6}  },
+    { s:{r:0,c:7},  e:{r:0,c:9}  },
+    { s:{r:0,c:10}, e:{r:0,c:12} },
+  ];
+  ws["!cols"] = [
+    { wch: 16 },
+    { wch: 16 }, { wch: 14 }, { wch: 24 },
+    { wch: 16 }, { wch: 14 }, { wch: 24 },
+    { wch: 16 }, { wch: 14 }, { wch: 24 },
+    { wch: 16 }, { wch: 14 }, { wch: 24 },
+  ];
+  XLSX.utils.book_append_sheet(wb, ws, "Forecast");
+  XLSX.writeFile(wb, "Japan_Weather_Live_Export.xlsx");
+}
+
+// ───── INIT ─────
+window.addEventListener('load', run);
+</script>
+</body>
+</html>
