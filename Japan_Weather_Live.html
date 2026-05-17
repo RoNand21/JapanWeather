@@ -20,11 +20,11 @@
   #debug {
     background: #1a1a2e; color: #9ae6b4; padding: 12px 16px;
     font-family: ui-monospace, 'SF Mono', Monaco, monospace; font-size: 11px;
-    max-height: 180px; overflow-y: auto; white-space: pre-wrap;
+    max-height: 140px; overflow-y: auto; white-space: pre-wrap;
     border-bottom: 2px solid #2563eb;
   }
-  #debug .err { color: #fc8181; }
-  #debug .ok { color: #9ae6b4; }
+  #debug .err  { color: #fc8181; }
+  #debug .ok   { color: #9ae6b4; }
   #debug .info { color: #90cdf4; }
 
   main { padding: 20px 24px; overflow-x: auto; }
@@ -45,20 +45,65 @@
   .col-kyoto { color: #145A32; }
   .col-osaka { color: #7B241C; }
 
-  tbody tr { border-bottom: 1px solid #DDE1E7; }
-  tbody tr:nth-child(even) td { background: #F8F9FA; }
-  tbody tr.rain td { background: #FEF9E7 !important; }
+  tbody tr.day-row { border-bottom: 1px solid #DDE1E7; cursor: pointer; transition: background 0.15s; }
+  tbody tr.day-row:nth-child(odd) td { background: #F8F9FA; }
+  tbody tr.day-row.rain td { background: #FEF9E7 !important; }
+  tbody tr.day-row:hover td { background: #E8F0FE !important; }
+  tbody tr.day-row.expanded td { background: #E3EAFD !important; border-bottom: none; }
+
   td { padding: 7px 10px; text-align: center; border-right: 1px solid #DDE1E7; }
   td:last-child { border-right: none; }
   td.section { border-left: 2px solid #AAA; }
   .date-cell { font-weight: 700; font-size: 11px; background: #EAECEE !important; text-align: left; padding-left: 12px; white-space: nowrap; }
   .rain .date-cell { color: #B7950B; }
-  .hi { color: #C0392B; font-weight: 600; }
-  .lo { color: #2471A3; font-weight: 600; }
-  .fc { color: #444; text-align: left; font-size: 11px; }
+  .hi  { color: #C0392B; font-weight: 600; }
+  .lo  { color: #2471A3; font-weight: 600; }
+  .fc  { color: #444; text-align: left; font-size: 11px; }
   .empty { color: #AAA; font-size: 10px; font-style: italic; }
   .avg-badge { display: inline-block; background: #FCF3CF; color: #7D6608; font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 3px; margin-left: 4px; }
+  .chevron { float: right; font-size: 10px; color: #888; transition: transform 0.2s; }
+  .chevron.open { transform: rotate(180deg); }
+
+  /* ── DROPDOWN ROW ── */
+  tr.detail-row td { padding: 0; background: #F0F4FF !important; border-bottom: 2px solid #2563eb; }
+  .detail-wrap { padding: 16px 20px; }
+  .detail-grid { display: flex; gap: 20px; flex-wrap: wrap; }
+  .city-panel {
+    flex: 1; min-width: 220px; border-radius: 8px; overflow: hidden;
+    border: 1px solid #DDE1E7; background: #fff;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  }
+  .city-panel-header {
+    padding: 8px 12px; font-size: 12px; font-weight: 700; color: #fff;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .cp-tokyo { background: #1F4E79; }
+  .cp-fuji  { background: #4B0082; }
+  .cp-kyoto { background: #145A32; }
+  .cp-osaka { background: #7B241C; }
+  .city-meta { padding: 8px 12px; border-bottom: 1px solid #DDE1E7; font-size: 11px; display: flex; gap: 16px; flex-wrap: wrap; }
+  .meta-item { display: flex; align-items: center; gap: 4px; }
+  .meta-label { color: #888; font-size: 10px; text-transform: uppercase; }
+  .meta-value { font-weight: 600; color: #222; }
+  .total-precip { color: #2471A3; font-weight: 700; }
+
+  /* hourly table */
+  .hourly-scroll { overflow-x: auto; max-height: 260px; overflow-y: auto; }
+  .hourly-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .hourly-tbl thead th { position: sticky; top: 0; background: #EEF2FF; padding: 5px 8px; font-size: 10px; text-transform: uppercase; color: #555; text-align: center; border-bottom: 1px solid #DDE1E7; }
+  .hourly-tbl tbody td { padding: 4px 8px; text-align: center; border-bottom: 1px solid #F0F0F0; }
+  .hourly-tbl tbody tr:hover td { background: #F5F7FF; }
+  .hourly-tbl .h-time { font-weight: 600; color: #333; text-align: left; white-space: nowrap; }
+  .hourly-tbl .h-temp { color: #C0392B; font-weight: 600; }
+  .hourly-tbl .h-precip { color: #2471A3; }
+  .hourly-tbl .h-precip.wet { color: #1a56db; font-weight: 700; }
+  .hourly-tbl .h-desc { text-align: left; color: #444; }
+  .avg-note { font-size: 10px; color: #B7950B; padding: 6px 12px; background: #FEF9E7; text-align: center; }
+
   .legend { margin-top: 14px; padding: 10px 14px; background: #fff; border-radius: 8px; border: 1px solid #DDE1E7; font-size: 11px; color: #666; display: flex; gap: 18px; flex-wrap: wrap; }
+  .click-hint { margin-top: 8px; font-size: 11px; color: #888; text-align: center; }
+
+  .loading-spinner { text-align: center; padding: 20px; color: #888; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -66,11 +111,11 @@
 <header>
   <div>
     <h1>🗾 Japan Trip Weather — May 2026</h1>
-    <p>Live data via Open-Meteo</p>
+    <p>Live data via Open-Meteo · Click any row for hourly detail</p>
   </div>
   <div class="btns">
     <button class="btn btn-refresh" id="refreshBtn" onclick="run()">↻ Refresh</button>
-    <button class="btn btn-export" id="exportBtn" onclick="exportExcel()" disabled>⬇ Export Excel</button>
+    <button class="btn btn-export"  id="exportBtn"  onclick="exportExcel()" disabled>⬇ Export Excel</button>
   </div>
 </header>
 
@@ -90,7 +135,7 @@
         <tr class="sub-header">
           <th class="col-date">Date</th>
           <th class="col-tokyo">Hi</th><th class="col-tokyo">Lo</th><th class="col-tokyo">Forecast</th>
-          <th class="col-fuji">Hi</th><th class="col-fuji">Lo</th><th class="col-fuji">Forecast</th>
+          <th class="col-fuji" >Hi</th><th class="col-fuji" >Lo</th><th class="col-fuji" >Forecast</th>
           <th class="col-kyoto">Hi</th><th class="col-kyoto">Lo</th><th class="col-kyoto">Forecast</th>
           <th class="col-osaka">Hi</th><th class="col-osaka">Lo</th><th class="col-osaka">Forecast</th>
         </tr>
@@ -98,24 +143,23 @@
       <tbody id="tbody"></tbody>
     </table>
   </div>
+  <p class="click-hint">👆 Click any row to expand hourly forecast, sunrise/sunset & precipitation details</p>
   <div class="legend">
     <strong>Legend:</strong>
     <span><span class="avg-badge">AVG</span> = historical average (date beyond live forecast)</span>
     <span style="color:#B7950B">⚠ rain expected</span>
-    <span>— = no scheduled location</span>
+    <span>— = not on itinerary that day</span>
   </div>
 </main>
 
 <script>
-// ───── CONFIG ─────
+// ── CONFIG ──
 const LOCATIONS = {
-  tokyo: { lat: 35.6762, lon: 139.6503 },
-  fuji:  { lat: 35.5131, lon: 138.7580 },
-  kyoto: { lat: 35.0116, lon: 135.7681 },
-  osaka: { lat: 34.6937, lon: 135.5023 },
+  tokyo: { lat: 35.6762, lon: 139.6503, label: "🗼 Tokyo",   cls: "cp-tokyo" },
+  fuji:  { lat: 35.5131, lon: 138.7580, label: "🗻 Mt. Fuji", cls: "cp-fuji"  },
+  kyoto: { lat: 35.0116, lon: 135.7681, label: "⛩ Kyoto",   cls: "cp-kyoto" },
+  osaka: { lat: 34.6937, lon: 135.5023, label: "🏯 Osaka",   cls: "cp-osaka" },
 };
-
-// Schedule: which dates and which locations are active
 const SCHEDULE = [
   { dateKey: "2026-05-20", label: "May 20 (Wed)", locs: ["tokyo"] },
   { dateKey: "2026-05-21", label: "May 21 (Thu)", locs: ["tokyo"] },
@@ -129,279 +173,368 @@ const SCHEDULE = [
   { dateKey: "2026-05-29", label: "May 29 (Fri)", locs: ["tokyo", "kyoto"] },
   { dateKey: "2026-05-30", label: "May 30 (Sat)", locs: ["tokyo"] },
 ];
-
 const LOC_KEYS = ["tokyo", "fuji", "kyoto", "osaka"];
 
-// In-memory data store
-let data = { tokyo: {}, fuji: {}, kyoto: {}, osaka: {} };
+let dailyData  = { tokyo: {}, fuji: {}, kyoto: {}, osaka: {} };
+let hourlyData = { tokyo: {}, fuji: {}, kyoto: {}, osaka: {} }; // key: dateKey
+let sunData    = { tokyo: {}, fuji: {}, kyoto: {}, osaka: {} };
+let openRow    = null; // currently expanded dateKey
 
-// ───── LOGGING ─────
+// ── LOGGING ──
 function log(msg, type = "") {
   const el = document.getElementById("debug");
-  const t = new Date().toLocaleTimeString();
-  const cls = type ? ` class="${type}"` : "";
-  el.innerHTML += `<span${cls}>[${t}] ${msg}</span>\n`;
+  const t  = new Date().toLocaleTimeString();
+  el.innerHTML += `<span${type ? ` class="${type}"` : ""}>[${t}] ${msg}</span>\n`;
   el.scrollTop = el.scrollHeight;
-  console.log(`[${type}] ${msg}`);
 }
 
-// ───── HELPERS ─────
+// ── HELPERS ──
 function fmtTemp(c) {
   if (c == null || isNaN(c)) return null;
   return `${Math.round(c * 9/5 + 32)}°F / ${Math.round(c)}°C`;
 }
+function fmtTempShort(c) {
+  if (c == null || isNaN(c)) return "—";
+  return `${Math.round(c * 9/5 + 32)}°F`;
+}
+function mmToIn(mm) {
+  if (mm == null || isNaN(mm)) return 0;
+  return mm / 25.4;
+}
 function wmoText(code) {
   if (code == null || isNaN(code)) return "—";
-  if (code === 0) return "☀️ Clear";
-  if (code <= 2) return "🌤 Partly cloudy";
-  if (code === 3) return "☁️ Overcast";
-  if (code <= 49) return "🌫 Foggy";
-  if (code <= 59) return "🌦 Drizzle";
-  if (code <= 69) return "🌧 Rain";
-  if (code <= 79) return "🌨 Snow";
-  if (code <= 84) return "🌦 Showers";
-  if (code <= 94) return "⛈ Thunderstorm";
+  if (code === 0)  return "☀️ Clear";
+  if (code <= 2)   return "🌤 Partly cloudy";
+  if (code === 3)  return "☁️ Overcast";
+  if (code <= 49)  return "🌫 Foggy";
+  if (code <= 59)  return "🌦 Drizzle";
+  if (code <= 69)  return "🌧 Rain";
+  if (code <= 79)  return "🌨 Snow";
+  if (code <= 84)  return "🌦 Showers";
+  if (code <= 94)  return "⛈ Thunderstorm";
   return "🌩 Storm";
 }
 function isRainy(code) { return code != null && code >= 51; }
+function fmtTime12(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Tokyo" });
+}
+function hourLabel(isoHour) {
+  const d = new Date(isoHour);
+  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Tokyo" });
+}
 
-// ───── DATA FETCHING ─────
-// Returns {date: {hi, lo, code, source}} for given location, in given year
-async function fetchLocationLive(key) {
+// ── FETCH DAILY LIVE ──
+async function fetchDailyLive(key) {
   const { lat, lon } = LOCATIONS[key];
-  // forecast_days=16 starts at today, gives daily forecast
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&forecast_days=16&timezone=Asia%2FTokyo`;
-
-  log(`Fetching live forecast for ${key}...`, "info");
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`${key} forecast: HTTP ${res.status}`);
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weathercode,sunrise,sunset,precipitation_sum&forecast_days=16&timezone=Asia%2FTokyo`;
+  log(`Fetching daily forecast for ${key}…`, "info");
+  const res  = await fetch(url);
+  if (!res.ok) throw new Error(`${key} daily: HTTP ${res.status}`);
   const json = await res.json();
-
-  if (!json.daily || !json.daily.time) {
-    throw new Error(`${key} forecast: malformed response`);
-  }
-
-  const result = {};
+  const result = {}, sunResult = {};
   json.daily.time.forEach((d, i) => {
     result[d] = {
-      hi: json.daily.temperature_2m_max[i],
-      lo: json.daily.temperature_2m_min[i],
-      code: json.daily.weathercode[i],
+      hi:    json.daily.temperature_2m_max[i],
+      lo:    json.daily.temperature_2m_min[i],
+      code:  json.daily.weathercode[i],
+      precip_mm: json.daily.precipitation_sum[i],
       source: "live",
     };
-  });
-  log(`✓ ${key}: got ${json.daily.time.length} days, ranging ${json.daily.time[0]} → ${json.daily.time[json.daily.time.length-1]}`, "ok");
-  return result;
-}
-
-// Pull historical average from the archive API for missing trip dates
-async function fetchHistoricalAvg(key, mmddList) {
-  const { lat, lon } = LOCATIONS[key];
-  const years = [2021, 2022, 2023, 2024, 2025];
-  const buckets = {}; // mmdd -> { hi: [], lo: [], codes: [] }
-
-  for (const year of years) {
-    const minMM = mmddList[0];
-    const maxMM = mmddList[mmddList.length - 1];
-    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${year}-${minMM}&end_date=${year}-${maxMM}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Asia%2FTokyo`;
-    log(`Fetching ${key} archive ${year}...`, "info");
-    try {
-      const res = await fetch(url);
-      if (!res.ok) { log(`  ${year} HTTP ${res.status}, skipping`, "err"); continue; }
-      const json = await res.json();
-      if (!json.daily || !json.daily.time) { log(`  ${year} no daily data`, "err"); continue; }
-      json.daily.time.forEach((d, i) => {
-        const mmdd = d.slice(5);
-        if (!buckets[mmdd]) buckets[mmdd] = { hi: [], lo: [], codes: [] };
-        if (json.daily.temperature_2m_max[i] != null) buckets[mmdd].hi.push(json.daily.temperature_2m_max[i]);
-        if (json.daily.temperature_2m_min[i] != null) buckets[mmdd].lo.push(json.daily.temperature_2m_min[i]);
-        if (json.daily.weathercode[i] != null) buckets[mmdd].codes.push(json.daily.weathercode[i]);
-      });
-    } catch (e) {
-      log(`  ${year} fetch failed: ${e.message}`, "err");
-    }
-  }
-
-  const result = {};
-  const avg = arr => arr.reduce((a,b)=>a+b,0) / arr.length;
-  const mode = arr => {
-    const counts = {};
-    arr.forEach(v => counts[v] = (counts[v] || 0) + 1);
-    return +Object.keys(counts).sort((a,b) => counts[b] - counts[a])[0];
-  };
-  Object.entries(buckets).forEach(([mmdd, b]) => {
-    if (b.hi.length === 0) return;
-    result[`2026-${mmdd}`] = {
-      hi: avg(b.hi),
-      lo: avg(b.lo),
-      code: mode(b.codes),
-      source: "avg",
+    sunResult[d] = {
+      sunrise: json.daily.sunrise[i],
+      sunset:  json.daily.sunset[i],
     };
   });
+  log(`✓ ${key} daily: ${json.daily.time.length} days`, "ok");
+  return { result, sunResult };
+}
+
+// ── FETCH HOURLY LIVE ──
+async function fetchHourlyLive(key, dateKey) {
+  const { lat, lon } = LOCATIONS[key];
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,precipitation&start_date=${dateKey}&end_date=${dateKey}&timezone=Asia%2FTokyo`;
+  log(`Fetching hourly for ${key} on ${dateKey}…`, "info");
+  const res  = await fetch(url);
+  if (!res.ok) throw new Error(`${key} hourly ${dateKey}: HTTP ${res.status}`);
+  const json = await res.json();
+  if (!json.hourly || !json.hourly.time) throw new Error(`${key} hourly: bad response`);
+  const hours = json.hourly.time.map((t, i) => ({
+    time:     t,
+    temp:     json.hourly.temperature_2m[i],
+    code:     json.hourly.weathercode[i],
+    precip_p: json.hourly.precipitation_probability[i],
+    precip_mm:json.hourly.precipitation[i],
+  }));
+  log(`✓ ${key} hourly ${dateKey}: ${hours.length} hrs`, "ok");
+  return hours;
+}
+
+// ── FETCH HISTORICAL AVG ──
+async function fetchHistoricalAvg(key, mmddList) {
+  const { lat, lon } = LOCATIONS[key];
+  const years   = [2021,2022,2023,2024,2025];
+  const buckets = {};
+  for (const year of years) {
+    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${year}-${mmddList[0]}&end_date=${year}-${mmddList[mmddList.length-1]}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum&timezone=Asia%2FTokyo`;
+    try {
+      const res  = await fetch(url);
+      if (!res.ok) continue;
+      const json = await res.json();
+      if (!json.daily?.time) continue;
+      json.daily.time.forEach((d, i) => {
+        const mm = d.slice(5);
+        if (!buckets[mm]) buckets[mm] = { hi:[], lo:[], codes:[], precip:[] };
+        if (json.daily.temperature_2m_max[i]  != null) buckets[mm].hi.push(json.daily.temperature_2m_max[i]);
+        if (json.daily.temperature_2m_min[i]  != null) buckets[mm].lo.push(json.daily.temperature_2m_min[i]);
+        if (json.daily.weathercode[i]         != null) buckets[mm].codes.push(json.daily.weathercode[i]);
+        if (json.daily.precipitation_sum[i]   != null) buckets[mm].precip.push(json.daily.precipitation_sum[i]);
+      });
+    } catch {}
+  }
+  const avg  = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
+  const mode = arr => { const c={}; arr.forEach(v=>c[v]=(c[v]||0)+1); return +Object.keys(c).sort((a,b)=>c[b]-c[a])[0]; };
+  const result = {};
+  Object.entries(buckets).forEach(([mm, b]) => {
+    if (!b.hi.length) return;
+    result[`2026-${mm}`] = { hi: avg(b.hi), lo: avg(b.lo), code: mode(b.codes), precip_mm: avg(b.precip), source: "avg" };
+  });
   return result;
 }
 
-// ───── MAIN ─────
+// ── MAIN ──
 async function run() {
   document.getElementById("debug").innerHTML = "";
   document.getElementById("refreshBtn").disabled = true;
-  document.getElementById("exportBtn").disabled = true;
-  data = { tokyo: {}, fuji: {}, kyoto: {}, osaka: {} };
+  document.getElementById("exportBtn").disabled  = true;
+  dailyData  = { tokyo:{}, fuji:{}, kyoto:{}, osaka:{} };
+  hourlyData = { tokyo:{}, fuji:{}, kyoto:{}, osaka:{} };
+  sunData    = { tokyo:{}, fuji:{}, kyoto:{}, osaka:{} };
+  openRow    = null;
 
-  const today = new Date();
-  log(`Today is ${today.toDateString()}. Trip is May 20-30, 2026.`, "info");
-
-  // Step 1: Get live forecast for all locations
-  let liveOK = 0;
   for (const key of LOC_KEYS) {
     try {
-      const res = await fetchLocationLive(key);
-      data[key] = res;
-      liveOK++;
-    } catch (e) {
-      log(`✗ ${key}: ${e.message}`, "err");
-    }
+      const { result, sunResult } = await fetchDailyLive(key);
+      dailyData[key] = result;
+      sunData[key]   = sunResult;
+    } catch(e) { log(`✗ ${key}: ${e.message}`, "err"); }
   }
-  log(`Live fetch complete: ${liveOK}/${LOC_KEYS.length} locations succeeded`, liveOK === LOC_KEYS.length ? "ok" : "err");
 
-  // Step 2: Find which trip dates are missing per location
-  const missingMmdd = new Set();
-  SCHEDULE.forEach(({ dateKey, locs }) => {
-    locs.forEach(loc => {
-      if (!data[loc] || !data[loc][dateKey]) {
-        missingMmdd.add(dateKey.slice(5));
-      }
-    });
-  });
-
-  if (missingMmdd.size > 0) {
-    log(`Missing dates needing historical average: ${[...missingMmdd].sort().join(", ")}`, "info");
-    const mmddArr = [...missingMmdd].sort();
+  // Fill missing trip dates with historical avg
+  const missing = new Set();
+  SCHEDULE.forEach(({ dateKey, locs }) => locs.forEach(loc => {
+    if (!dailyData[loc]?.[dateKey]) missing.add(dateKey.slice(5));
+  }));
+  if (missing.size) {
+    const arr = [...missing].sort();
     for (const key of LOC_KEYS) {
       try {
-        const res = await fetchHistoricalAvg(key, mmddArr);
-        Object.entries(res).forEach(([dk, val]) => {
-          if (!data[key][dk]) data[key][dk] = val;
-        });
-        log(`✓ ${key}: historical avg done`, "ok");
-      } catch (e) {
-        log(`✗ ${key} archive: ${e.message}`, "err");
-      }
+        const res = await fetchHistoricalAvg(key, arr);
+        Object.entries(res).forEach(([dk, v]) => { if (!dailyData[key][dk]) dailyData[key][dk] = v; });
+        log(`✓ ${key}: historical avg filled`, "ok");
+      } catch(e) { log(`✗ ${key} archive: ${e.message}`, "err"); }
     }
-  } else {
-    log(`All trip dates covered by live forecast.`, "ok");
   }
-
-  // Step 3: Report what we have for the trip
-  let cellCount = 0;
-  SCHEDULE.forEach(({ dateKey, locs }) => {
-    locs.forEach(loc => {
-      if (data[loc][dateKey]) cellCount++;
-    });
-  });
-  const expectedCells = SCHEDULE.reduce((sum, s) => sum + s.locs.length, 0);
-  log(`Final: ${cellCount}/${expectedCells} expected data points populated.`, cellCount === expectedCells ? "ok" : "err");
 
   render();
   document.getElementById("refreshBtn").disabled = false;
-  document.getElementById("exportBtn").disabled = false;
+  document.getElementById("exportBtn").disabled  = false;
 }
 
-// ───── RENDER ─────
+// ── TOGGLE DETAIL ROW ──
+async function toggleDetail(dateKey, locs) {
+  const detailId = `detail-${dateKey}`;
+  const existing = document.getElementById(detailId);
+  const dayRow   = document.getElementById(`row-${dateKey}`);
+
+  // Close if already open
+  if (existing) {
+    existing.remove();
+    dayRow.classList.remove("expanded");
+    dayRow.querySelector(".chevron").classList.remove("open");
+    openRow = null;
+    return;
+  }
+
+  // Close previously open row
+  if (openRow) {
+    const prev = document.getElementById(`detail-${openRow}`);
+    if (prev) prev.remove();
+    const pr = document.getElementById(`row-${openRow}`);
+    if (pr) { pr.classList.remove("expanded"); pr.querySelector(".chevron").classList.remove("open"); }
+  }
+  openRow = dateKey;
+  dayRow.classList.add("expanded");
+  dayRow.querySelector(".chevron").classList.add("open");
+
+  // Insert placeholder row
+  const tr    = document.createElement("tr");
+  tr.id       = detailId;
+  tr.className = "detail-row";
+  const td    = document.createElement("td");
+  td.colSpan  = 13;
+  td.innerHTML = `<div class="loading-spinner">⏳ Loading hourly data…</div>`;
+  tr.appendChild(td);
+  dayRow.insertAdjacentElement("afterend", tr);
+
+  // Fetch hourly for active locs
+  const panels = {};
+  await Promise.all(locs.map(async loc => {
+    try {
+      if (!hourlyData[loc][dateKey]) {
+        hourlyData[loc][dateKey] = await fetchHourlyLive(loc, dateKey);
+      }
+      panels[loc] = hourlyData[loc][dateKey];
+    } catch(e) {
+      log(`✗ hourly ${loc} ${dateKey}: ${e.message}`, "err");
+      panels[loc] = null;
+    }
+  }));
+
+  td.innerHTML = buildDetailHTML(dateKey, locs, panels);
+}
+
+// ── BUILD DETAIL HTML ──
+function buildDetailHTML(dateKey, locs, panels) {
+  const isAvg = locs.some(loc => dailyData[loc]?.[dateKey]?.source === "avg");
+
+  let html = `<div class="detail-wrap">`;
+  if (isAvg) html += `<div class="avg-note">⚠ This date is beyond the 16-day forecast window — daily figures are 5-year historical averages. Hourly breakdown unavailable for historical dates.</div>`;
+  html += `<div class="detail-grid">`;
+
+  for (const loc of locs) {
+    const cfg  = LOCATIONS[loc];
+    const sun  = sunData[loc]?.[dateKey];
+    const day  = dailyData[loc]?.[dateKey];
+    const hrs  = panels[loc];
+    const totalIn = day?.precip_mm != null ? mmToIn(day.precip_mm).toFixed(2) : "—";
+
+    html += `
+      <div class="city-panel">
+        <div class="city-panel-header ${cfg.cls}">
+          <span>${cfg.label}</span>
+          <span style="font-size:10px;font-weight:400">${dateKey}</span>
+        </div>
+        <div class="city-meta">
+          <div class="meta-item"><span class="meta-label">🌅 Sunrise</span><span class="meta-value">${sun ? fmtTime12(sun.sunrise) : "—"}</span></div>
+          <div class="meta-item"><span class="meta-label">🌇 Sunset</span><span class="meta-value">${sun ? fmtTime12(sun.sunset) : "—"}</span></div>
+          <div class="meta-item"><span class="meta-label">🌧 Total Precip</span><span class="meta-value total-precip">${totalIn} in</span></div>
+          <div class="meta-item"><span class="meta-label">🌡 Hi/Lo</span><span class="meta-value">${day ? (fmtTemp(day.hi) + " / " + fmtTemp(day.lo)) : "—"}</span></div>
+        </div>`;
+
+    if (isAvg || !hrs) {
+      html += `<div style="padding:12px;font-size:11px;color:#888;text-align:center">Hourly data only available within the 16-day live forecast window.</div>`;
+    } else {
+      html += `
+        <div class="hourly-scroll">
+          <table class="hourly-tbl">
+            <thead>
+              <tr>
+                <th>Hour</th>
+                <th>Temp</th>
+                <th>Precip %</th>
+                <th>Precip (in)</th>
+                <th>Conditions</th>
+              </tr>
+            </thead>
+            <tbody>`;
+      hrs.forEach(h => {
+        const pp   = h.precip_p ?? 0;
+        const pin  = mmToIn(h.precip_mm ?? 0).toFixed(3);
+        const wet  = pp > 20 || (h.precip_mm ?? 0) > 0.1;
+        html += `
+              <tr>
+                <td class="h-time">${hourLabel(h.time)}</td>
+                <td class="h-temp">${fmtTempShort(h.temp)}</td>
+                <td class="h-precip${wet ? " wet" : ""}">${pp}%</td>
+                <td class="h-precip${wet ? " wet" : ""}">${wet ? pin : "—"}</td>
+                <td class="h-desc">${wmoText(h.code)}</td>
+              </tr>`;
+      });
+      html += `</tbody></table></div>`;
+    }
+    html += `</div>`; // city-panel
+  }
+
+  html += `</div></div>`; // detail-grid, detail-wrap
+  return html;
+}
+
+// ── RENDER MAIN TABLE ──
 function render() {
   const tbody = document.getElementById("tbody");
   tbody.innerHTML = "";
   SCHEDULE.forEach(({ dateKey, label, locs }) => {
-    const tr = document.createElement("tr");
-    const hasRain = locs.some(loc => isRainy(data[loc]?.[dateKey]?.code));
-    if (hasRain) tr.classList.add("rain");
+    const hasRain = locs.some(loc => isRainy(dailyData[loc]?.[dateKey]?.code));
+    const tr  = document.createElement("tr");
+    tr.id     = `row-${dateKey}`;
+    tr.className = `day-row${hasRain ? " rain" : ""}`;
+    tr.onclick = () => toggleDetail(dateKey, locs);
 
-    const td = document.createElement("td");
-    td.className = "date-cell";
-    td.innerHTML = label + (hasRain ? ' ⚠' : '');
-    tr.appendChild(td);
+    const tdDate = document.createElement("td");
+    tdDate.className = "date-cell";
+    tdDate.innerHTML = `${label}${hasRain ? " ⚠" : ""} <span class="chevron">▼</span>`;
+    tr.appendChild(tdDate);
 
     LOC_KEYS.forEach((key, idx) => {
       const active = locs.includes(key);
-      const d = active ? data[key]?.[dateKey] : null;
-      const tdHi = document.createElement("td");
-      const tdLo = document.createElement("td");
-      const tdFc = document.createElement("td");
+      const d      = active ? dailyData[key]?.[dateKey] : null;
+      const tdHi   = document.createElement("td");
+      const tdLo   = document.createElement("td");
+      const tdFc   = document.createElement("td");
       if (idx === 0) tdHi.classList.add("section");
 
-      if (d && fmtTemp(d.hi) != null) {
-        tdHi.className = `hi${idx === 0 ? ' section' : ''}`;
+      if (d && fmtTemp(d.hi)) {
+        tdHi.className = `hi${idx===0?" section":""}`;
         tdLo.className = "lo";
         tdFc.className = "fc";
-        const isAvg = d.source === "avg";
-        tdHi.innerHTML = fmtTemp(d.hi) + (isAvg ? '<span class="avg-badge">AVG</span>' : '');
+        tdHi.innerHTML = fmtTemp(d.hi) + (d.source==="avg" ? '<span class="avg-badge">AVG</span>' : "");
         tdLo.textContent = fmtTemp(d.lo);
         tdFc.textContent = wmoText(d.code);
       } else if (active) {
-        [tdHi, tdLo, tdFc].forEach(t => t.classList.add("empty"));
-        tdHi.textContent = "—";
-        tdLo.textContent = "—";
-        tdFc.textContent = "no data";
+        [tdHi,tdLo,tdFc].forEach(t => t.classList.add("empty"));
+        tdHi.textContent = "—"; tdLo.textContent = "—"; tdFc.textContent = "no data";
       } else {
-        [tdHi, tdLo, tdFc].forEach(t => t.classList.add("empty"));
-        tdHi.textContent = "—";
-        tdLo.textContent = "—";
-        tdFc.textContent = "—";
+        [tdHi,tdLo,tdFc].forEach(t => t.classList.add("empty"));
+        tdHi.textContent = "—"; tdLo.textContent = "—"; tdFc.textContent = "—";
       }
-      tr.appendChild(tdHi);
-      tr.appendChild(tdLo);
-      tr.appendChild(tdFc);
+      tr.appendChild(tdHi); tr.appendChild(tdLo); tr.appendChild(tdFc);
     });
     tbody.appendChild(tr);
   });
 }
 
-// ───── EXCEL EXPORT ─────
+// ── EXCEL EXPORT ──
 function exportExcel() {
-  const wb = XLSX.utils.book_new();
+  const wb   = XLSX.utils.book_new();
   const rows = [];
-  rows.push(["", "TOKYO", "", "", "MT. FUJI", "", "", "KYOTO", "", "", "OSAKA", "", ""]);
-  rows.push(["Date", "Hi", "Lo", "Forecast", "Hi", "Lo", "Forecast", "Hi", "Lo", "Forecast", "Hi", "Lo", "Forecast"]);
+  rows.push(["","TOKYO","","","MT. FUJI","","","KYOTO","","","OSAKA","",""]);
+  rows.push(["Date","Hi","Lo","Forecast","Hi","Lo","Forecast","Hi","Lo","Forecast","Hi","Lo","Forecast"]);
   SCHEDULE.forEach(({ dateKey, label, locs }) => {
     const row = [label];
     LOC_KEYS.forEach(key => {
       const active = locs.includes(key);
-      const d = active ? data[key]?.[dateKey] : null;
+      const d = active ? dailyData[key]?.[dateKey] : null;
       if (d && fmtTemp(d.hi)) {
-        const sfx = d.source === "avg" ? " (AVG)" : "";
-        row.push(fmtTemp(d.hi) + sfx, fmtTemp(d.lo), wmoText(d.code));
+        row.push(fmtTemp(d.hi)+(d.source==="avg"?" (AVG)":""), fmtTemp(d.lo), wmoText(d.code));
       } else if (active) {
-        row.push("—", "—", "no data");
+        row.push("—","—","no data");
       } else {
-        row.push("—", "—", "—");
+        row.push("—","—","—");
       }
     });
     rows.push(row);
   });
-  rows.push([]);
-  rows.push([`Open-Meteo, exported ${new Date().toLocaleString()}`]);
-  rows.push(["(AVG) = 5-year historical average for dates beyond 16-day forecast window"]);
-
+  rows.push([], [`Open-Meteo, exported ${new Date().toLocaleString()}`]);
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws["!merges"] = [
-    { s:{r:0,c:1},  e:{r:0,c:3}  },
-    { s:{r:0,c:4},  e:{r:0,c:6}  },
-    { s:{r:0,c:7},  e:{r:0,c:9}  },
-    { s:{r:0,c:10}, e:{r:0,c:12} },
-  ];
-  ws["!cols"] = [
-    { wch: 16 },
-    { wch: 16 }, { wch: 14 }, { wch: 24 },
-    { wch: 16 }, { wch: 14 }, { wch: 24 },
-    { wch: 16 }, { wch: 14 }, { wch: 24 },
-    { wch: 16 }, { wch: 14 }, { wch: 24 },
-  ];
+  ws["!cols"] = [{wch:16},{wch:16},{wch:14},{wch:24},{wch:16},{wch:14},{wch:24},{wch:16},{wch:14},{wch:24},{wch:16},{wch:14},{wch:24}];
   XLSX.utils.book_append_sheet(wb, ws, "Forecast");
   XLSX.writeFile(wb, "Japan_Weather_Live_Export.xlsx");
 }
 
-// ───── INIT ─────
-window.addEventListener('load', run);
+// ── INIT ──
+window.addEventListener("load", run);
 </script>
 </body>
 </html>
