@@ -273,8 +273,7 @@ function wmoShort(code){
   if(code<=79)return"🌨";if(code<=84)return"🌦";if(code<=94)return"⛈";return"🌩";
 }
 function isRainy(c){return c!=null&&c>=51;}
-function t12(iso){if(!iso)return"—";return new Date(iso).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",hour12:true,timeZone:"Asia/Tokyo"});}
-function hLabel(iso){return new Date(iso).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",hour12:true,timeZone:"Asia/Tokyo"});}
+ new Date(iso).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",hour12:true,timeZone:"Asia/Tokyo"});}
 
 // ── FETCH ──
 async function fetchDaily(key){
