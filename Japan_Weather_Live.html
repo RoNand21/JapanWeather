@@ -2,55 +2,64 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>Japan Trip Weather — May 2026</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #F4F6F8; color: #1A1A2E; min-height: 100vh; }
-  header { background: linear-gradient(135deg,#1a1a2e,#16213e); color: #fff; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-  header h1 { font-size: 17px; font-weight: 700; }
-  header p { font-size: 11px; color: #8AB4CC; margin-top: 2px; }
-  .btns { display: flex; gap: 8px; flex-wrap: wrap; }
-  .btn { padding: 8px 14px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; color: #fff; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #F4F6F8; color: #1A1A2E; min-height: 100vh; -webkit-text-size-adjust: 100%; }
+
+  header { background: linear-gradient(135deg,#1a1a2e,#16213e); color: #fff; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  header h1 { font-size: 16px; font-weight: 700; }
+  header p { font-size: 10px; color: #8AB4CC; margin-top: 2px; }
+  .btns { display: flex; gap: 8px; }
+  .btn { padding: 8px 14px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; color: #fff; -webkit-tap-highlight-color: transparent; }
   .btn-refresh { background: #2563eb; }
   .btn-export  { background: #217346; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn:active { opacity: 0.8; }
+
+  /* ── VIEW TOGGLE ── */
+  .view-toggle { display: none; }
+  @media (max-width: 768px) {
+    .view-toggle { display: flex; gap: 0; margin: 0 20px; margin-top: 12px; border-radius: 8px; overflow: hidden; border: 2px solid #2563eb; }
+    .view-btn { flex: 1; padding: 10px; border: none; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
+    .view-btn.active { background: #2563eb; color: #fff; }
+    .view-btn:not(.active) { background: #fff; color: #2563eb; }
+  }
 
   #debug {
-    background: #1a1a2e; color: #9ae6b4; padding: 12px 16px;
-    font-family: ui-monospace, 'SF Mono', Monaco, monospace; font-size: 11px;
-    max-height: 140px; overflow-y: auto; white-space: pre-wrap;
+    background: #1a1a2e; color: #9ae6b4; padding: 10px 16px;
+    font-family: ui-monospace, 'SF Mono', Monaco, monospace; font-size: 10px;
+    max-height: 100px; overflow-y: auto; white-space: pre-wrap;
     border-bottom: 2px solid #2563eb;
   }
   #debug .err  { color: #fc8181; }
   #debug .ok   { color: #9ae6b4; }
   #debug .info { color: #90cdf4; }
 
-  main { padding: 20px 24px; overflow-x: auto; }
-  .table-wrap { overflow-x: auto; border-radius: 10px; box-shadow: 0 2px 14px rgba(0,0,0,0.08); }
-  table { width: 100%; border-collapse: collapse; background: #fff; min-width: 900px; font-size: 12px; }
+  main { padding: 16px 20px; }
 
+  /* ═══════════════════════════════════════
+     DESKTOP TABLE VIEW
+     ═══════════════════════════════════════ */
+  .table-wrap { overflow-x: auto; border-radius: 10px; box-shadow: 0 2px 14px rgba(0,0,0,0.08); }
+  table.main-tbl { width: 100%; border-collapse: collapse; background: #fff; min-width: 900px; font-size: 12px; }
   .loc-header th { padding: 10px 12px; font-size: 12px; font-weight: 700; color: #fff; text-align: center; }
   .th-date-corner { background: #2C3E50; }
   .th-tokyo { background: #1F4E79; }
   .th-fuji  { background: #4B0082; }
   .th-kyoto { background: #145A32; }
   .th-osaka { background: #7B241C; }
-
   .sub-header th { padding: 6px 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; background: #D6E4F0; text-align: center; border-bottom: 2px solid #DDE1E7; }
   .sub-header .col-date { background: #EAECEE; color: #4A5568; }
-  .col-tokyo { color: #1F4E79; }
-  .col-fuji  { color: #4B0082; }
-  .col-kyoto { color: #145A32; }
-  .col-osaka { color: #7B241C; }
+  .col-tokyo { color: #1F4E79; } .col-fuji { color: #4B0082; } .col-kyoto { color: #145A32; } .col-osaka { color: #7B241C; }
 
-  tbody tr.day-row { border-bottom: 1px solid #DDE1E7; cursor: pointer; transition: background 0.15s; }
+  tbody tr.day-row { border-bottom: 1px solid #DDE1E7; cursor: pointer; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
   tbody tr.day-row:nth-child(odd) td { background: #F8F9FA; }
   tbody tr.day-row.rain td { background: #FEF9E7 !important; }
   tbody tr.day-row:hover td { background: #E8F0FE !important; }
   tbody tr.day-row.expanded td { background: #E3EAFD !important; border-bottom: none; }
-
   td { padding: 7px 10px; text-align: center; border-right: 1px solid #DDE1E7; }
   td:last-child { border-right: none; }
   td.section { border-left: 2px solid #AAA; }
@@ -64,10 +73,46 @@
   .chevron { float: right; font-size: 10px; color: #888; transition: transform 0.2s; }
   .chevron.open { transform: rotate(180deg); }
 
-  /* ── DROPDOWN ROW ── */
+  /* ── DETAIL ROW (desktop) ── */
   tr.detail-row td { padding: 0; background: #F0F4FF !important; border-bottom: 2px solid #2563eb; }
   .detail-wrap { padding: 16px 20px; }
   .detail-grid { display: flex; gap: 20px; flex-wrap: wrap; }
+
+  /* ═══════════════════════════════════════
+     MOBILE CARD VIEW
+     ═══════════════════════════════════════ */
+  #mobile-view { display: none; }
+
+  .day-card {
+    background: #fff; border-radius: 12px; margin-bottom: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07); overflow: hidden;
+    border: 1px solid #E0E4EA; -webkit-tap-highlight-color: transparent;
+  }
+  .day-card-header {
+    padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer; background: #fff; transition: background 0.15s;
+  }
+  .day-card-header:active { background: #F0F4FF; }
+  .day-card.rain .day-card-header { background: #FEF9E7; }
+  .day-card.expanded .day-card-header { background: #E3EAFD; }
+  .day-date { font-weight: 700; font-size: 14px; color: #1A1A2E; }
+  .day-date .rain-warn { color: #B7950B; font-size: 12px; }
+  .m-chevron { font-size: 12px; color: #888; transition: transform 0.2s; }
+  .m-chevron.open { transform: rotate(180deg); }
+
+  .day-card-summary { padding: 0 16px 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .city-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; color: #fff;
+  }
+  .chip-tokyo { background: #1F4E79; } .chip-fuji { background: #4B0082; }
+  .chip-kyoto { background: #145A32; } .chip-osaka { background: #7B241C; }
+  .chip-detail { font-weight: 400; font-size: 10px; opacity: 0.9; }
+
+  .day-card-detail { display: none; border-top: 1px solid #DDE1E7; }
+  .day-card.expanded .day-card-detail { display: block; }
+
+  /* ── CITY PANEL (shared) ── */
   .city-panel {
     flex: 1; min-width: 220px; border-radius: 8px; overflow: hidden;
     border: 1px solid #DDE1E7; background: #fff;
@@ -77,33 +122,53 @@
     padding: 8px 12px; font-size: 12px; font-weight: 700; color: #fff;
     display: flex; justify-content: space-between; align-items: center;
   }
-  .cp-tokyo { background: #1F4E79; }
-  .cp-fuji  { background: #4B0082; }
-  .cp-kyoto { background: #145A32; }
-  .cp-osaka { background: #7B241C; }
-  .city-meta { padding: 8px 12px; border-bottom: 1px solid #DDE1E7; font-size: 11px; display: flex; gap: 16px; flex-wrap: wrap; }
+  .cp-tokyo { background: #1F4E79; } .cp-fuji { background: #4B0082; }
+  .cp-kyoto { background: #145A32; } .cp-osaka { background: #7B241C; }
+
+  .city-meta { padding: 10px 12px; border-bottom: 1px solid #DDE1E7; font-size: 11px; display: flex; gap: 12px; flex-wrap: wrap; }
   .meta-item { display: flex; align-items: center; gap: 4px; }
   .meta-label { color: #888; font-size: 10px; text-transform: uppercase; }
   .meta-value { font-weight: 600; color: #222; }
   .total-precip { color: #2471A3; font-weight: 700; }
 
-  /* hourly table */
-  .hourly-scroll { overflow-x: auto; max-height: 260px; overflow-y: auto; }
+  .hourly-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .hourly-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
-  .hourly-tbl thead th { position: sticky; top: 0; background: #EEF2FF; padding: 5px 8px; font-size: 10px; text-transform: uppercase; color: #555; text-align: center; border-bottom: 1px solid #DDE1E7; }
-  .hourly-tbl tbody td { padding: 4px 8px; text-align: center; border-bottom: 1px solid #F0F0F0; }
-  .hourly-tbl tbody tr:hover td { background: #F5F7FF; }
-  .hourly-tbl .h-time { font-weight: 600; color: #333; text-align: left; white-space: nowrap; }
+  .hourly-tbl thead th { position: sticky; top: 0; background: #EEF2FF; padding: 6px 8px; font-size: 10px; text-transform: uppercase; color: #555; text-align: center; border-bottom: 1px solid #DDE1E7; white-space: nowrap; }
+  .hourly-tbl tbody td { padding: 5px 8px; text-align: center; border-bottom: 1px solid #F0F0F0; white-space: nowrap; }
+  .hourly-tbl tbody tr:nth-child(even) td { background: #FAFBFF; }
+  .hourly-tbl .h-time { font-weight: 600; color: #333; text-align: left; }
   .hourly-tbl .h-temp { color: #C0392B; font-weight: 600; }
   .hourly-tbl .h-precip { color: #2471A3; }
   .hourly-tbl .h-precip.wet { color: #1a56db; font-weight: 700; }
   .hourly-tbl .h-desc { text-align: left; color: #444; }
-  .avg-note { font-size: 10px; color: #B7950B; padding: 6px 12px; background: #FEF9E7; text-align: center; }
+  .avg-note { font-size: 10px; color: #B7950B; padding: 8px 12px; background: #FEF9E7; text-align: center; }
 
-  .legend { margin-top: 14px; padding: 10px 14px; background: #fff; border-radius: 8px; border: 1px solid #DDE1E7; font-size: 11px; color: #666; display: flex; gap: 18px; flex-wrap: wrap; }
-  .click-hint { margin-top: 8px; font-size: 11px; color: #888; text-align: center; }
-
+  .legend { margin-top: 14px; padding: 10px 14px; background: #fff; border-radius: 8px; border: 1px solid #DDE1E7; font-size: 11px; color: #666; display: flex; gap: 14px; flex-wrap: wrap; }
+  .click-hint { margin-top: 10px; font-size: 11px; color: #888; text-align: center; }
   .loading-spinner { text-align: center; padding: 20px; color: #888; font-size: 12px; }
+
+  /* ═══════════════════════════════════════
+     MOBILE PANELS STACKED
+     ═══════════════════════════════════════ */
+  @media (max-width: 768px) {
+    header h1 { font-size: 15px; }
+    main { padding: 12px; }
+    #desktop-view { display: none !important; }
+    #mobile-view  { display: block !important; }
+    .detail-grid  { flex-direction: column; gap: 12px; }
+    .city-panel   { min-width: 100%; }
+    .city-meta    { flex-direction: column; gap: 8px; }
+    .meta-item    { justify-content: space-between; }
+    .hourly-tbl   { font-size: 12px; }
+    .hourly-tbl thead th { padding: 8px 6px; font-size: 9px; }
+    .hourly-tbl tbody td { padding: 6px; }
+    .legend { flex-direction: column; gap: 6px; }
+  }
+
+  @media (min-width: 769px) {
+    #mobile-view { display: none !important; }
+    #desktop-view { display: block !important; }
+  }
 </style>
 </head>
 <body>
@@ -111,54 +176,61 @@
 <header>
   <div>
     <h1>🗾 Japan Trip Weather — May 2026</h1>
-    <p>Live data via Open-Meteo · Click any row for hourly detail</p>
+    <p>Live data via Open-Meteo · Tap any day for hourly detail</p>
   </div>
   <div class="btns">
     <button class="btn btn-refresh" id="refreshBtn" onclick="run()">↻ Refresh</button>
-    <button class="btn btn-export"  id="exportBtn"  onclick="exportExcel()" disabled>⬇ Export Excel</button>
+    <button class="btn btn-export"  id="exportBtn"  onclick="exportExcel()" disabled>⬇ Export</button>
   </div>
 </header>
 
-<div id="debug">Initializing...</div>
+<div id="debug">Initializing…</div>
 
 <main>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr class="loc-header">
-          <th class="th-date-corner"></th>
-          <th colspan="3" class="th-tokyo">🗼 TOKYO</th>
-          <th colspan="3" class="th-fuji">🗻 MT. FUJI</th>
-          <th colspan="3" class="th-kyoto">⛩ KYOTO</th>
-          <th colspan="3" class="th-osaka">🏯 OSAKA</th>
-        </tr>
-        <tr class="sub-header">
-          <th class="col-date">Date</th>
-          <th class="col-tokyo">Hi</th><th class="col-tokyo">Lo</th><th class="col-tokyo">Forecast</th>
-          <th class="col-fuji" >Hi</th><th class="col-fuji" >Lo</th><th class="col-fuji" >Forecast</th>
-          <th class="col-kyoto">Hi</th><th class="col-kyoto">Lo</th><th class="col-kyoto">Forecast</th>
-          <th class="col-osaka">Hi</th><th class="col-osaka">Lo</th><th class="col-osaka">Forecast</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
+  <!-- ════ DESKTOP VIEW ════ -->
+  <div id="desktop-view">
+    <div class="table-wrap">
+      <table class="main-tbl">
+        <thead>
+          <tr class="loc-header">
+            <th class="th-date-corner"></th>
+            <th colspan="3" class="th-tokyo">🗼 TOKYO</th>
+            <th colspan="3" class="th-fuji">🗻 MT. FUJI</th>
+            <th colspan="3" class="th-kyoto">⛩ KYOTO</th>
+            <th colspan="3" class="th-osaka">🏯 OSAKA</th>
+          </tr>
+          <tr class="sub-header">
+            <th class="col-date">Date</th>
+            <th class="col-tokyo">Hi</th><th class="col-tokyo">Lo</th><th class="col-tokyo">Forecast</th>
+            <th class="col-fuji">Hi</th><th class="col-fuji">Lo</th><th class="col-fuji">Forecast</th>
+            <th class="col-kyoto">Hi</th><th class="col-kyoto">Lo</th><th class="col-kyoto">Forecast</th>
+            <th class="col-osaka">Hi</th><th class="col-osaka">Lo</th><th class="col-osaka">Forecast</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
   </div>
-  <p class="click-hint">👆 Click any row to expand hourly forecast, sunrise/sunset & precipitation details</p>
+
+  <!-- ════ MOBILE VIEW ════ -->
+  <div id="mobile-view"></div>
+
+  <p class="click-hint">👆 Tap any day to expand hourly forecast, sunrise/sunset & precipitation</p>
   <div class="legend">
     <strong>Legend:</strong>
-    <span><span class="avg-badge">AVG</span> = historical average (date beyond live forecast)</span>
+    <span><span class="avg-badge">AVG</span> = historical average</span>
     <span style="color:#B7950B">⚠ rain expected</span>
-    <span>— = not on itinerary that day</span>
+    <span>— = not on itinerary</span>
   </div>
 </main>
 
 <script>
 // ── CONFIG ──
 const LOCATIONS = {
-  tokyo: { lat: 35.6762, lon: 139.6503, label: "🗼 Tokyo",   cls: "cp-tokyo" },
-  fuji:  { lat: 35.5131, lon: 138.7580, label: "🗻 Mt. Fuji", cls: "cp-fuji"  },
-  kyoto: { lat: 35.0116, lon: 135.7681, label: "⛩ Kyoto",   cls: "cp-kyoto" },
-  osaka: { lat: 34.6937, lon: 135.5023, label: "🏯 Osaka",   cls: "cp-osaka" },
+  tokyo: { lat: 35.6762, lon: 139.6503, label: "🗼 Tokyo",    cls: "cp-tokyo", chip: "chip-tokyo" },
+  fuji:  { lat: 35.5131, lon: 138.7580, label: "🗻 Mt. Fuji", cls: "cp-fuji",  chip: "chip-fuji"  },
+  kyoto: { lat: 35.0116, lon: 135.7681, label: "⛩ Kyoto",    cls: "cp-kyoto", chip: "chip-kyoto" },
+  osaka: { lat: 34.6937, lon: 135.5023, label: "🏯 Osaka",    cls: "cp-osaka", chip: "chip-osaka" },
 };
 const SCHEDULE = [
   { dateKey: "2026-05-20", label: "May 20 (Wed)", locs: ["tokyo"] },
@@ -166,375 +238,237 @@ const SCHEDULE = [
   { dateKey: "2026-05-22", label: "May 22 (Fri)", locs: ["tokyo"] },
   { dateKey: "2026-05-23", label: "May 23 (Sat)", locs: ["tokyo"] },
   { dateKey: "2026-05-24", label: "May 24 (Sun)", locs: ["tokyo"] },
-  { dateKey: "2026-05-25", label: "May 25 (Mon)", locs: ["tokyo", "fuji"] },
-  { dateKey: "2026-05-26", label: "May 26 (Tue)", locs: ["tokyo", "kyoto"] },
+  { dateKey: "2026-05-25", label: "May 25 (Mon)", locs: ["tokyo","fuji"] },
+  { dateKey: "2026-05-26", label: "May 26 (Tue)", locs: ["tokyo","kyoto"] },
   { dateKey: "2026-05-27", label: "May 27 (Wed)", locs: ["kyoto"] },
-  { dateKey: "2026-05-28", label: "May 28 (Thu)", locs: ["kyoto", "osaka"] },
-  { dateKey: "2026-05-29", label: "May 29 (Fri)", locs: ["tokyo", "kyoto"] },
+  { dateKey: "2026-05-28", label: "May 28 (Thu)", locs: ["kyoto","osaka"] },
+  { dateKey: "2026-05-29", label: "May 29 (Fri)", locs: ["tokyo","kyoto"] },
   { dateKey: "2026-05-30", label: "May 30 (Sat)", locs: ["tokyo"] },
 ];
-const LOC_KEYS = ["tokyo", "fuji", "kyoto", "osaka"];
+const LOC_KEYS = ["tokyo","fuji","kyoto","osaka"];
 
-let dailyData  = { tokyo: {}, fuji: {}, kyoto: {}, osaka: {} };
-let hourlyData = { tokyo: {}, fuji: {}, kyoto: {}, osaka: {} }; // key: dateKey
-let sunData    = { tokyo: {}, fuji: {}, kyoto: {}, osaka: {} };
-let openRow    = null; // currently expanded dateKey
+let dailyData={tokyo:{},fuji:{},kyoto:{},osaka:{}};
+let hourlyData={tokyo:{},fuji:{},kyoto:{},osaka:{}};
+let sunData={tokyo:{},fuji:{},kyoto:{},osaka:{}};
+let openRow=null, openCard=null;
 
 // ── LOGGING ──
-function log(msg, type = "") {
-  const el = document.getElementById("debug");
-  const t  = new Date().toLocaleTimeString();
-  el.innerHTML += `<span${type ? ` class="${type}"` : ""}>[${t}] ${msg}</span>\n`;
-  el.scrollTop = el.scrollHeight;
-}
+function log(m,t=""){const el=document.getElementById("debug");el.innerHTML+=`<span${t?` class="${t}"`:""}>[${new Date().toLocaleTimeString()}] ${m}</span>\n`;el.scrollTop=el.scrollHeight;}
 
 // ── HELPERS ──
-function fmtTemp(c) {
-  if (c == null || isNaN(c)) return null;
-  return `${Math.round(c * 9/5 + 32)}°F / ${Math.round(c)}°C`;
+function fmtTemp(c){if(c==null||isNaN(c))return null;return`${Math.round(c*9/5+32)}°F / ${Math.round(c)}°C`;}
+function fmtF(c){if(c==null||isNaN(c))return"—";return`${Math.round(c*9/5+32)}°F`;}
+function fmtFOnly(c){if(c==null||isNaN(c))return"—";return`${Math.round(c*9/5+32)}°`;}
+function mmIn(mm){return mm!=null&&!isNaN(mm)?mm/25.4:0;}
+function wmo(code){
+  if(code==null||isNaN(code))return"—";
+  if(code===0)return"☀️ Clear";if(code<=2)return"🌤 Partly cloudy";if(code===3)return"☁️ Overcast";
+  if(code<=49)return"🌫 Foggy";if(code<=59)return"🌦 Drizzle";if(code<=69)return"🌧 Rain";
+  if(code<=79)return"🌨 Snow";if(code<=84)return"🌦 Showers";if(code<=94)return"⛈ T-storm";return"🌩 Storm";
 }
-function fmtTempShort(c) {
-  if (c == null || isNaN(c)) return "—";
-  return `${Math.round(c * 9/5 + 32)}°F`;
+function wmoShort(code){
+  if(code==null||isNaN(code))return"—";
+  if(code===0)return"☀️";if(code<=2)return"🌤";if(code===3)return"☁️";
+  if(code<=49)return"🌫";if(code<=59)return"🌦";if(code<=69)return"🌧";
+  if(code<=79)return"🌨";if(code<=84)return"🌦";if(code<=94)return"⛈";return"🌩";
 }
-function mmToIn(mm) {
-  if (mm == null || isNaN(mm)) return 0;
-  return mm / 25.4;
-}
-function wmoText(code) {
-  if (code == null || isNaN(code)) return "—";
-  if (code === 0)  return "☀️ Clear";
-  if (code <= 2)   return "🌤 Partly cloudy";
-  if (code === 3)  return "☁️ Overcast";
-  if (code <= 49)  return "🌫 Foggy";
-  if (code <= 59)  return "🌦 Drizzle";
-  if (code <= 69)  return "🌧 Rain";
-  if (code <= 79)  return "🌨 Snow";
-  if (code <= 84)  return "🌦 Showers";
-  if (code <= 94)  return "⛈ Thunderstorm";
-  return "🌩 Storm";
-}
-function isRainy(code) { return code != null && code >= 51; }
-function fmtTime12(iso) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Tokyo" });
-}
-function hourLabel(isoHour) {
-  const d = new Date(isoHour);
-  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Tokyo" });
-}
+function isRainy(c){return c!=null&&c>=51;}
+function t12(iso){if(!iso)return"—";return new Date(iso).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",hour12:true,timeZone:"Asia/Tokyo"});}
+function hLabel(iso){return new Date(iso).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",hour12:true,timeZone:"Asia/Tokyo"});}
 
-// ── FETCH DAILY LIVE ──
-async function fetchDailyLive(key) {
-  const { lat, lon } = LOCATIONS[key];
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weathercode,sunrise,sunset,precipitation_sum&forecast_days=16&timezone=Asia%2FTokyo`;
-  log(`Fetching daily forecast for ${key}…`, "info");
-  const res  = await fetch(url);
-  if (!res.ok) throw new Error(`${key} daily: HTTP ${res.status}`);
-  const json = await res.json();
-  const result = {}, sunResult = {};
-  json.daily.time.forEach((d, i) => {
-    result[d] = {
-      hi:    json.daily.temperature_2m_max[i],
-      lo:    json.daily.temperature_2m_min[i],
-      code:  json.daily.weathercode[i],
-      precip_mm: json.daily.precipitation_sum[i],
-      source: "live",
-    };
-    sunResult[d] = {
-      sunrise: json.daily.sunrise[i],
-      sunset:  json.daily.sunset[i],
-    };
+// ── FETCH ──
+async function fetchDaily(key){
+  const{lat,lon}=LOCATIONS[key];
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weathercode,sunrise,sunset,precipitation_sum&forecast_days=16&timezone=Asia%2FTokyo`;
+  log(`Fetching daily ${key}…`,"info");
+  const r=await fetch(url);if(!r.ok)throw new Error(`HTTP ${r.status}`);
+  const j=await r.json();const res={},sun={};
+  j.daily.time.forEach((d,i)=>{
+    res[d]={hi:j.daily.temperature_2m_max[i],lo:j.daily.temperature_2m_min[i],code:j.daily.weathercode[i],precip_mm:j.daily.precipitation_sum[i],source:"live"};
+    sun[d]={sunrise:j.daily.sunrise[i],sunset:j.daily.sunset[i]};
   });
-  log(`✓ ${key} daily: ${json.daily.time.length} days`, "ok");
-  return { result, sunResult };
+  log(`✓ ${key} daily: ${j.daily.time.length} days`,"ok");
+  return{res,sun};
 }
 
-// ── FETCH HOURLY LIVE ──
-async function fetchHourlyLive(key, dateKey) {
-  const { lat, lon } = LOCATIONS[key];
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,precipitation&start_date=${dateKey}&end_date=${dateKey}&timezone=Asia%2FTokyo`;
-  log(`Fetching hourly for ${key} on ${dateKey}…`, "info");
-  const res  = await fetch(url);
-  if (!res.ok) throw new Error(`${key} hourly ${dateKey}: HTTP ${res.status}`);
-  const json = await res.json();
-  if (!json.hourly || !json.hourly.time) throw new Error(`${key} hourly: bad response`);
-  const hours = json.hourly.time.map((t, i) => ({
-    time:     t,
-    temp:     json.hourly.temperature_2m[i],
-    code:     json.hourly.weathercode[i],
-    precip_p: json.hourly.precipitation_probability[i],
-    precip_mm:json.hourly.precipitation[i],
-  }));
-  log(`✓ ${key} hourly ${dateKey}: ${hours.length} hrs`, "ok");
-  return hours;
+async function fetchHourly(key,dk){
+  const{lat,lon}=LOCATIONS[key];
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,precipitation&start_date=${dk}&end_date=${dk}&timezone=Asia%2FTokyo`;
+  log(`Fetching hourly ${key} ${dk}…`,"info");
+  const r=await fetch(url);if(!r.ok)throw new Error(`HTTP ${r.status}`);
+  const j=await r.json();
+  return j.hourly.time.map((t,i)=>({time:t,temp:j.hourly.temperature_2m[i],code:j.hourly.weathercode[i],pp:j.hourly.precipitation_probability[i],pmm:j.hourly.precipitation[i]}));
 }
 
-// ── FETCH HISTORICAL AVG ──
-async function fetchHistoricalAvg(key, mmddList) {
-  const { lat, lon } = LOCATIONS[key];
-  const years   = [2021,2022,2023,2024,2025];
-  const buckets = {};
-  for (const year of years) {
-    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${year}-${mmddList[0]}&end_date=${year}-${mmddList[mmddList.length-1]}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum&timezone=Asia%2FTokyo`;
-    try {
-      const res  = await fetch(url);
-      if (!res.ok) continue;
-      const json = await res.json();
-      if (!json.daily?.time) continue;
-      json.daily.time.forEach((d, i) => {
-        const mm = d.slice(5);
-        if (!buckets[mm]) buckets[mm] = { hi:[], lo:[], codes:[], precip:[] };
-        if (json.daily.temperature_2m_max[i]  != null) buckets[mm].hi.push(json.daily.temperature_2m_max[i]);
-        if (json.daily.temperature_2m_min[i]  != null) buckets[mm].lo.push(json.daily.temperature_2m_min[i]);
-        if (json.daily.weathercode[i]         != null) buckets[mm].codes.push(json.daily.weathercode[i]);
-        if (json.daily.precipitation_sum[i]   != null) buckets[mm].precip.push(json.daily.precipitation_sum[i]);
-      });
-    } catch {}
-  }
-  const avg  = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
-  const mode = arr => { const c={}; arr.forEach(v=>c[v]=(c[v]||0)+1); return +Object.keys(c).sort((a,b)=>c[b]-c[a])[0]; };
-  const result = {};
-  Object.entries(buckets).forEach(([mm, b]) => {
-    if (!b.hi.length) return;
-    result[`2026-${mm}`] = { hi: avg(b.hi), lo: avg(b.lo), code: mode(b.codes), precip_mm: avg(b.precip), source: "avg" };
-  });
-  return result;
+async function fetchHistAvg(key,mmList){
+  const{lat,lon}=LOCATIONS[key];const years=[2021,2022,2023,2024,2025],bk={};
+  for(const y of years){try{
+    const r=await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${y}-${mmList[0]}&end_date=${y}-${mmList[mmList.length-1]}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum&timezone=Asia%2FTokyo`);
+    if(!r.ok)continue;const j=await r.json();if(!j.daily?.time)continue;
+    j.daily.time.forEach((d,i)=>{const mm=d.slice(5);if(!bk[mm])bk[mm]={h:[],l:[],c:[],p:[]};
+      if(j.daily.temperature_2m_max[i]!=null)bk[mm].h.push(j.daily.temperature_2m_max[i]);
+      if(j.daily.temperature_2m_min[i]!=null)bk[mm].l.push(j.daily.temperature_2m_min[i]);
+      if(j.daily.weathercode[i]!=null)bk[mm].c.push(j.daily.weathercode[i]);
+      if(j.daily.precipitation_sum[i]!=null)bk[mm].p.push(j.daily.precipitation_sum[i]);
+    });
+  }catch{}}
+  const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+  const mode=a=>{const c={};a.forEach(v=>c[v]=(c[v]||0)+1);return+Object.keys(c).sort((a,b)=>c[b]-c[a])[0];};
+  const res={};
+  Object.entries(bk).forEach(([mm,b])=>{if(!b.h.length)return;res[`2026-${mm}`]={hi:avg(b.h),lo:avg(b.l),code:mode(b.c),precip_mm:avg(b.p),source:"avg"};});
+  return res;
 }
 
 // ── MAIN ──
-async function run() {
-  document.getElementById("debug").innerHTML = "";
-  document.getElementById("refreshBtn").disabled = true;
-  document.getElementById("exportBtn").disabled  = true;
-  dailyData  = { tokyo:{}, fuji:{}, kyoto:{}, osaka:{} };
-  hourlyData = { tokyo:{}, fuji:{}, kyoto:{}, osaka:{} };
-  sunData    = { tokyo:{}, fuji:{}, kyoto:{}, osaka:{} };
-  openRow    = null;
+async function run(){
+  document.getElementById("debug").innerHTML="";
+  document.getElementById("refreshBtn").disabled=true;
+  document.getElementById("exportBtn").disabled=true;
+  dailyData={tokyo:{},fuji:{},kyoto:{},osaka:{}};
+  hourlyData={tokyo:{},fuji:{},kyoto:{},osaka:{}};
+  sunData={tokyo:{},fuji:{},kyoto:{},osaka:{}};
+  openRow=null;openCard=null;
 
-  for (const key of LOC_KEYS) {
-    try {
-      const { result, sunResult } = await fetchDailyLive(key);
-      dailyData[key] = result;
-      sunData[key]   = sunResult;
-    } catch(e) { log(`✗ ${key}: ${e.message}`, "err"); }
+  for(const k of LOC_KEYS){try{const{res,sun}=await fetchDaily(k);dailyData[k]=res;sunData[k]=sun;}catch(e){log(`✗ ${k}: ${e.message}`,"err");}}
+
+  const miss=new Set();
+  SCHEDULE.forEach(({dateKey:dk,locs:l})=>l.forEach(loc=>{if(!dailyData[loc]?.[dk])miss.add(dk.slice(5));}));
+  if(miss.size){const arr=[...miss].sort();
+    for(const k of LOC_KEYS){try{const r=await fetchHistAvg(k,arr);Object.entries(r).forEach(([dk,v])=>{if(!dailyData[k][dk])dailyData[k][dk]=v;});log(`✓ ${k} hist avg`,"ok");}catch(e){log(`✗ ${k} archive: ${e.message}`,"err");}}
   }
 
-  // Fill missing trip dates with historical avg
-  const missing = new Set();
-  SCHEDULE.forEach(({ dateKey, locs }) => locs.forEach(loc => {
-    if (!dailyData[loc]?.[dateKey]) missing.add(dateKey.slice(5));
-  }));
-  if (missing.size) {
-    const arr = [...missing].sort();
-    for (const key of LOC_KEYS) {
-      try {
-        const res = await fetchHistoricalAvg(key, arr);
-        Object.entries(res).forEach(([dk, v]) => { if (!dailyData[key][dk]) dailyData[key][dk] = v; });
-        log(`✓ ${key}: historical avg filled`, "ok");
-      } catch(e) { log(`✗ ${key} archive: ${e.message}`, "err"); }
-    }
-  }
-
-  render();
-  document.getElementById("refreshBtn").disabled = false;
-  document.getElementById("exportBtn").disabled  = false;
+  renderDesktop();
+  renderMobile();
+  document.getElementById("refreshBtn").disabled=false;
+  document.getElementById("exportBtn").disabled=false;
 }
 
-// ── TOGGLE DETAIL ROW ──
-async function toggleDetail(dateKey, locs) {
-  const detailId = `detail-${dateKey}`;
-  const existing = document.getElementById(detailId);
-  const dayRow   = document.getElementById(`row-${dateKey}`);
-
-  // Close if already open
-  if (existing) {
-    existing.remove();
-    dayRow.classList.remove("expanded");
-    dayRow.querySelector(".chevron").classList.remove("open");
-    openRow = null;
-    return;
-  }
-
-  // Close previously open row
-  if (openRow) {
-    const prev = document.getElementById(`detail-${openRow}`);
-    if (prev) prev.remove();
-    const pr = document.getElementById(`row-${openRow}`);
-    if (pr) { pr.classList.remove("expanded"); pr.querySelector(".chevron").classList.remove("open"); }
-  }
-  openRow = dateKey;
-  dayRow.classList.add("expanded");
-  dayRow.querySelector(".chevron").classList.add("open");
-
-  // Insert placeholder row
-  const tr    = document.createElement("tr");
-  tr.id       = detailId;
-  tr.className = "detail-row";
-  const td    = document.createElement("td");
-  td.colSpan  = 13;
-  td.innerHTML = `<div class="loading-spinner">⏳ Loading hourly data…</div>`;
-  tr.appendChild(td);
-  dayRow.insertAdjacentElement("afterend", tr);
-
-  // Fetch hourly for active locs
-  const panels = {};
-  await Promise.all(locs.map(async loc => {
-    try {
-      if (!hourlyData[loc][dateKey]) {
-        hourlyData[loc][dateKey] = await fetchHourlyLive(loc, dateKey);
-      }
-      panels[loc] = hourlyData[loc][dateKey];
-    } catch(e) {
-      log(`✗ hourly ${loc} ${dateKey}: ${e.message}`, "err");
-      panels[loc] = null;
-    }
-  }));
-
-  td.innerHTML = buildDetailHTML(dateKey, locs, panels);
-}
-
-// ── BUILD DETAIL HTML ──
-function buildDetailHTML(dateKey, locs, panels) {
-  const isAvg = locs.some(loc => dailyData[loc]?.[dateKey]?.source === "avg");
-
-  let html = `<div class="detail-wrap">`;
-  if (isAvg) html += `<div class="avg-note">⚠ This date is beyond the 16-day forecast window — daily figures are 5-year historical averages. Hourly breakdown unavailable for historical dates.</div>`;
-  html += `<div class="detail-grid">`;
-
-  for (const loc of locs) {
-    const cfg  = LOCATIONS[loc];
-    const sun  = sunData[loc]?.[dateKey];
-    const day  = dailyData[loc]?.[dateKey];
-    const hrs  = panels[loc];
-    const totalIn = day?.precip_mm != null ? mmToIn(day.precip_mm).toFixed(2) : "—";
-
-    html += `
-      <div class="city-panel">
-        <div class="city-panel-header ${cfg.cls}">
-          <span>${cfg.label}</span>
-          <span style="font-size:10px;font-weight:400">${dateKey}</span>
-        </div>
-        <div class="city-meta">
-          <div class="meta-item"><span class="meta-label">🌅 Sunrise</span><span class="meta-value">${sun ? fmtTime12(sun.sunrise) : "—"}</span></div>
-          <div class="meta-item"><span class="meta-label">🌇 Sunset</span><span class="meta-value">${sun ? fmtTime12(sun.sunset) : "—"}</span></div>
-          <div class="meta-item"><span class="meta-label">🌧 Total Precip</span><span class="meta-value total-precip">${totalIn} in</span></div>
-          <div class="meta-item"><span class="meta-label">🌡 Hi/Lo</span><span class="meta-value">${day ? (fmtTemp(day.hi) + " / " + fmtTemp(day.lo)) : "—"}</span></div>
-        </div>`;
-
-    if (isAvg || !hrs) {
-      html += `<div style="padding:12px;font-size:11px;color:#888;text-align:center">Hourly data only available within the 16-day live forecast window.</div>`;
-    } else {
-      html += `
-        <div class="hourly-scroll">
-          <table class="hourly-tbl">
-            <thead>
-              <tr>
-                <th>Hour</th>
-                <th>Temp</th>
-                <th>Precip %</th>
-                <th>Precip (in)</th>
-                <th>Conditions</th>
-              </tr>
-            </thead>
-            <tbody>`;
-      hrs.forEach(h => {
-        const pp   = h.precip_p ?? 0;
-        const pin  = mmToIn(h.precip_mm ?? 0).toFixed(3);
-        const wet  = pp > 20 || (h.precip_mm ?? 0) > 0.1;
-        html += `
-              <tr>
-                <td class="h-time">${hourLabel(h.time)}</td>
-                <td class="h-temp">${fmtTempShort(h.temp)}</td>
-                <td class="h-precip${wet ? " wet" : ""}">${pp}%</td>
-                <td class="h-precip${wet ? " wet" : ""}">${wet ? pin : "—"}</td>
-                <td class="h-desc">${wmoText(h.code)}</td>
-              </tr>`;
-      });
-      html += `</tbody></table></div>`;
-    }
-    html += `</div>`; // city-panel
-  }
-
-  html += `</div></div>`; // detail-grid, detail-wrap
-  return html;
-}
-
-// ── RENDER MAIN TABLE ──
-function render() {
-  const tbody = document.getElementById("tbody");
-  tbody.innerHTML = "";
-  SCHEDULE.forEach(({ dateKey, label, locs }) => {
-    const hasRain = locs.some(loc => isRainy(dailyData[loc]?.[dateKey]?.code));
-    const tr  = document.createElement("tr");
-    tr.id     = `row-${dateKey}`;
-    tr.className = `day-row${hasRain ? " rain" : ""}`;
-    tr.onclick = () => toggleDetail(dateKey, locs);
-
-    const tdDate = document.createElement("td");
-    tdDate.className = "date-cell";
-    tdDate.innerHTML = `${label}${hasRain ? " ⚠" : ""} <span class="chevron">▼</span>`;
-    tr.appendChild(tdDate);
-
-    LOC_KEYS.forEach((key, idx) => {
-      const active = locs.includes(key);
-      const d      = active ? dailyData[key]?.[dateKey] : null;
-      const tdHi   = document.createElement("td");
-      const tdLo   = document.createElement("td");
-      const tdFc   = document.createElement("td");
-      if (idx === 0) tdHi.classList.add("section");
-
-      if (d && fmtTemp(d.hi)) {
-        tdHi.className = `hi${idx===0?" section":""}`;
-        tdLo.className = "lo";
-        tdFc.className = "fc";
-        tdHi.innerHTML = fmtTemp(d.hi) + (d.source==="avg" ? '<span class="avg-badge">AVG</span>' : "");
-        tdLo.textContent = fmtTemp(d.lo);
-        tdFc.textContent = wmoText(d.code);
-      } else if (active) {
-        [tdHi,tdLo,tdFc].forEach(t => t.classList.add("empty"));
-        tdHi.textContent = "—"; tdLo.textContent = "—"; tdFc.textContent = "no data";
-      } else {
-        [tdHi,tdLo,tdFc].forEach(t => t.classList.add("empty"));
-        tdHi.textContent = "—"; tdLo.textContent = "—"; tdFc.textContent = "—";
-      }
-      tr.appendChild(tdHi); tr.appendChild(tdLo); tr.appendChild(tdFc);
+// ── CITY PANEL HTML (shared) ──
+function panelHTML(loc,dk,hrs){
+  const cfg=LOCATIONS[loc],sun=sunData[loc]?.[dk],day=dailyData[loc]?.[dk];
+  const totalIn=day?.precip_mm!=null?mmIn(day.precip_mm).toFixed(2):"—";
+  const isAvg=day?.source==="avg";
+  let h=`<div class="city-panel"><div class="city-panel-header ${cfg.cls}"><span>${cfg.label}</span><span style="font-size:10px;font-weight:400">${dk}</span></div>
+    <div class="city-meta">
+      <div class="meta-item"><span class="meta-label">🌅 Sunrise</span><span class="meta-value">${sun?t12(sun.sunrise):"—"}</span></div>
+      <div class="meta-item"><span class="meta-label">🌇 Sunset</span><span class="meta-value">${sun?t12(sun.sunset):"—"}</span></div>
+      <div class="meta-item"><span class="meta-label">🌧 Total Precip</span><span class="meta-value total-precip">${totalIn} in</span></div>
+      <div class="meta-item"><span class="meta-label">🌡 Hi / Lo</span><span class="meta-value">${day?(fmtTemp(day.hi)+" / "+fmtTemp(day.lo)):"—"}</span></div>
+    </div>`;
+  if(isAvg||!hrs){
+    h+=`<div style="padding:12px;font-size:11px;color:#888;text-align:center">Hourly data available within 16-day forecast window only.</div>`;
+  }else{
+    h+=`<div class="hourly-scroll"><table class="hourly-tbl"><thead><tr><th>Hour</th><th>Temp</th><th>Precip %</th><th>Precip (in)</th><th>Conditions</th></tr></thead><tbody>`;
+    hrs.forEach(r=>{const pp=r.pp??0,pin=mmIn(r.pmm??0).toFixed(3),wet=pp>20||(r.pmm??0)>0.1;
+      h+=`<tr><td class="h-time">${hLabel(r.time)}</td><td class="h-temp">${fmtF(r.temp)}</td><td class="h-precip${wet?" wet":""}">${pp}%</td><td class="h-precip${wet?" wet":""}">${wet?pin:"—"}</td><td class="h-desc">${wmo(r.code)}</td></tr>`;
     });
-    tbody.appendChild(tr);
+    h+=`</tbody></table></div>`;
+  }
+  h+=`</div>`;return h;
+}
+
+// ═══ DESKTOP ═══
+async function toggleDesktop(dk,locs){
+  const did=`detail-${dk}`,ex=document.getElementById(did),dr=document.getElementById(`row-${dk}`);
+  if(ex){ex.remove();dr.classList.remove("expanded");dr.querySelector(".chevron").classList.remove("open");openRow=null;return;}
+  if(openRow){const p=document.getElementById(`detail-${openRow}`);if(p)p.remove();const pr=document.getElementById(`row-${openRow}`);if(pr){pr.classList.remove("expanded");pr.querySelector(".chevron").classList.remove("open");}}
+  openRow=dk;dr.classList.add("expanded");dr.querySelector(".chevron").classList.add("open");
+
+  const tr=document.createElement("tr");tr.id=did;tr.className="detail-row";
+  const td=document.createElement("td");td.colSpan=13;td.innerHTML=`<div class="loading-spinner">⏳ Loading hourly…</div>`;tr.appendChild(td);dr.insertAdjacentElement("afterend",tr);
+
+  const panels={};
+  await Promise.all(locs.map(async loc=>{try{if(!hourlyData[loc][dk])hourlyData[loc][dk]=await fetchHourly(loc,dk);panels[loc]=hourlyData[loc][dk];}catch(e){log(`✗ hourly ${loc} ${dk}: ${e.message}`,"err");panels[loc]=null;}}));
+
+  const isAvg=locs.some(l=>dailyData[l]?.[dk]?.source==="avg");
+  let html=`<div class="detail-wrap">${isAvg?'<div class="avg-note">⚠ Beyond 16-day forecast — daily figures are 5-year historical averages.</div>':""}<div class="detail-grid">`;
+  locs.forEach(loc=>{html+=panelHTML(loc,dk,panels[loc]);});
+  html+=`</div></div>`;td.innerHTML=html;
+}
+
+function renderDesktop(){
+  const tb=document.getElementById("tbody");tb.innerHTML="";
+  SCHEDULE.forEach(({dateKey:dk,label,locs})=>{
+    const rain=locs.some(l=>isRainy(dailyData[l]?.[dk]?.code));
+    const tr=document.createElement("tr");tr.id=`row-${dk}`;tr.className=`day-row${rain?" rain":""}`;
+    tr.onclick=()=>toggleDesktop(dk,locs);
+    const td=document.createElement("td");td.className="date-cell";td.innerHTML=`${label}${rain?" ⚠":""} <span class="chevron">▼</span>`;tr.appendChild(td);
+    LOC_KEYS.forEach((k,i)=>{
+      const active=locs.includes(k),d=active?dailyData[k]?.[dk]:null;
+      const tH=document.createElement("td"),tL=document.createElement("td"),tF=document.createElement("td");
+      if(i===0)tH.classList.add("section");
+      if(d&&fmtTemp(d.hi)){tH.className=`hi${i===0?" section":""}`;tL.className="lo";tF.className="fc";tH.innerHTML=fmtTemp(d.hi)+(d.source==="avg"?'<span class="avg-badge">AVG</span>':"");tL.textContent=fmtTemp(d.lo);tF.textContent=wmo(d.code);}
+      else if(active){[tH,tL,tF].forEach(t=>t.classList.add("empty"));tH.textContent="—";tL.textContent="—";tF.textContent="no data";}
+      else{[tH,tL,tF].forEach(t=>t.classList.add("empty"));tH.textContent="—";tL.textContent="—";tF.textContent="—";}
+      tr.appendChild(tH);tr.appendChild(tL);tr.appendChild(tF);
+    });
+    tb.appendChild(tr);
+  });
+}
+
+// ═══ MOBILE ═══
+async function toggleMobile(dk,locs){
+  const card=document.getElementById(`mcard-${dk}`);
+  const detail=card.querySelector(".day-card-detail");
+  const chev=card.querySelector(".m-chevron");
+
+  if(card.classList.contains("expanded")){card.classList.remove("expanded");chev.classList.remove("open");openCard=null;return;}
+  if(openCard){const pc=document.getElementById(`mcard-${openCard}`);if(pc){pc.classList.remove("expanded");pc.querySelector(".m-chevron").classList.remove("open");}}
+  openCard=dk;card.classList.add("expanded");chev.classList.add("open");
+
+  detail.innerHTML=`<div class="loading-spinner">⏳ Loading hourly…</div>`;
+
+  const panels={};
+  await Promise.all(locs.map(async loc=>{try{if(!hourlyData[loc][dk])hourlyData[loc][dk]=await fetchHourly(loc,dk);panels[loc]=hourlyData[loc][dk];}catch(e){panels[loc]=null;}}));
+
+  const isAvg=locs.some(l=>dailyData[l]?.[dk]?.source==="avg");
+  let html=isAvg?'<div class="avg-note">⚠ Historical averages — hourly unavailable.</div>':"";
+  html+=`<div style="padding:12px;display:flex;flex-direction:column;gap:12px;">`;
+  locs.forEach(loc=>{html+=panelHTML(loc,dk,panels[loc]);});
+  html+=`</div>`;
+  detail.innerHTML=html;
+}
+
+function renderMobile(){
+  const wrap=document.getElementById("mobile-view");wrap.innerHTML="";
+  SCHEDULE.forEach(({dateKey:dk,label,locs})=>{
+    const rain=locs.some(l=>isRainy(dailyData[l]?.[dk]?.code));
+    const card=document.createElement("div");card.className=`day-card${rain?" rain":""}`;card.id=`mcard-${dk}`;
+
+    // Header
+    let hdr=`<div class="day-card-header" onclick="toggleMobile('${dk}',${JSON.stringify(locs)})">
+      <span class="day-date">${label}${rain?' <span class="rain-warn">⚠</span>':""}</span>
+      <span class="m-chevron">▼</span></div>`;
+
+    // Summary chips
+    let chips=`<div class="day-card-summary">`;
+    locs.forEach(loc=>{
+      const d=dailyData[loc]?.[dk],cfg=LOCATIONS[loc];
+      if(d){chips+=`<span class="city-chip ${cfg.chip}">${cfg.label} <span class="chip-detail">${fmtFOnly(d.hi)}/${fmtFOnly(d.lo)} ${wmoShort(d.code)}</span></span>`;}
+    });
+    chips+=`</div>`;
+
+    // Detail (hidden until expanded)
+    let det=`<div class="day-card-detail"></div>`;
+
+    card.innerHTML=hdr+chips+det;
+    wrap.appendChild(card);
   });
 }
 
 // ── EXCEL EXPORT ──
-function exportExcel() {
-  const wb   = XLSX.utils.book_new();
-  const rows = [];
+function exportExcel(){
+  const wb=XLSX.utils.book_new(),rows=[];
   rows.push(["","TOKYO","","","MT. FUJI","","","KYOTO","","","OSAKA","",""]);
   rows.push(["Date","Hi","Lo","Forecast","Hi","Lo","Forecast","Hi","Lo","Forecast","Hi","Lo","Forecast"]);
-  SCHEDULE.forEach(({ dateKey, label, locs }) => {
-    const row = [label];
-    LOC_KEYS.forEach(key => {
-      const active = locs.includes(key);
-      const d = active ? dailyData[key]?.[dateKey] : null;
-      if (d && fmtTemp(d.hi)) {
-        row.push(fmtTemp(d.hi)+(d.source==="avg"?" (AVG)":""), fmtTemp(d.lo), wmoText(d.code));
-      } else if (active) {
-        row.push("—","—","no data");
-      } else {
-        row.push("—","—","—");
-      }
-    });
-    rows.push(row);
-  });
-  rows.push([], [`Open-Meteo, exported ${new Date().toLocaleString()}`]);
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws["!cols"] = [{wch:16},{wch:16},{wch:14},{wch:24},{wch:16},{wch:14},{wch:24},{wch:16},{wch:14},{wch:24},{wch:16},{wch:14},{wch:24}];
-  XLSX.utils.book_append_sheet(wb, ws, "Forecast");
-  XLSX.writeFile(wb, "Japan_Weather_Live_Export.xlsx");
+  SCHEDULE.forEach(({dateKey:dk,label,locs})=>{const row=[label];LOC_KEYS.forEach(k=>{const a=locs.includes(k),d=a?dailyData[k]?.[dk]:null;
+    if(d&&fmtTemp(d.hi)){row.push(fmtTemp(d.hi)+(d.source==="avg"?" (AVG)":""),fmtTemp(d.lo),wmo(d.code));}else if(a){row.push("—","—","no data");}else{row.push("—","—","—");}});rows.push(row);});
+  rows.push([],[`Open-Meteo, exported ${new Date().toLocaleString()}`]);
+  const ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=[{wch:16},{wch:16},{wch:14},{wch:24},{wch:16},{wch:14},{wch:24},{wch:16},{wch:14},{wch:24},{wch:16},{wch:14},{wch:24}];
+  XLSX.utils.book_append_sheet(wb,ws,"Forecast");XLSX.writeFile(wb,"Japan_Weather_Live_Export.xlsx");
 }
 
-// ── INIT ──
-window.addEventListener("load", run);
+window.addEventListener("load",run);
 </script>
 </body>
 </html>
